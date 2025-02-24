@@ -5,6 +5,7 @@
 /api/appsettings.Development.json
 /api/appsettings.json
 /api/Properties/launchSettings.json
+/api/Data/snappshare.db
 
 # Web Ignore Rules
 /web/node_modules/

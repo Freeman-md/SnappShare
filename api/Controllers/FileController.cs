@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using api.Data;
 using api.Interfaces.Services;
 using api.Models;
 using Humanizer;
@@ -12,13 +13,15 @@ public class FileController : ControllerBase
 {
     private readonly ILogger<FileController> _logger;
     private readonly IBlobService _blobService;
+    private readonly SnappshareContext _dbContext;
 
     private const string BlobContainerName = "snappshare";
 
-    public FileController(ILogger<FileController> logger, IBlobService blobService)
+    public FileController(ILogger<FileController> logger, IBlobService blobService, SnappshareContext dbContext)
     {
         _logger = logger;
         _blobService = blobService;
+        _dbContext = dbContext;
     }
 
     [HttpPost("upload")]
@@ -34,12 +37,24 @@ public class FileController : ControllerBase
 
             string sasUrl = await _blobService.GenerateSasTokenAsync(uniqueFileName, BlobContainerName, expiryTime);
 
+            var newFile = new FileUpload
+            {
+                Id = Guid.NewGuid().ToString()[..6],
+                OriginalUrl = sasUrl,
+                CreatedAt = DateTime.UtcNow,
+                ExpiryDuration = fileUpload.ExpiryDuration,
+            };
+
+            _dbContext.FileUploads.Add(newFile);
+            await _dbContext.SaveChangesAsync();
+
             var response = new SuccessApiResponse<object>()
             {
                 Data = new
                 {
-                ExpiryDuration = $"Expires in {GetHumanReadableDuration((int)fileUpload.ExpiryDuration)}",
-                    FileUrl = sasUrl
+                    UniqueId = newFile.Id,
+                    ExpiryDuration = $"Expires in {GetHumanReadableDuration((int)fileUpload.ExpiryDuration)}",
+                    FileAccessUrl = $"{Request.Scheme}://{Request.Host}/file/{newFile.Id}"
                 }
             };
 
@@ -72,8 +87,8 @@ public class FileController : ControllerBase
     }
 
     private string GetHumanReadableDuration(int durationInMinutes)
-{
-    return TimeSpan.FromMinutes(durationInMinutes).Humanize(minUnit: Humanizer.Localisation.TimeUnit.Minute);
-}
+    {
+        return TimeSpan.FromMinutes(durationInMinutes).Humanize(minUnit: Humanizer.Localisation.TimeUnit.Minute);
+    }
 
 }

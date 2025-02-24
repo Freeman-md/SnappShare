@@ -4,6 +4,8 @@ using Azure.Identity;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.Extensions.Azure;
 using DotNetEnv;
+using api.Data;
+using Microsoft.EntityFrameworkCore;
 
 Env.Load();
 
@@ -27,6 +29,14 @@ builder.Services.AddAzureClients(
 );
 
 builder.Services.AddSingleton<IBlobService, BlobService>();
+
+builder.Services.AddDbContext<SnappshareContext>(options => {
+    string rootDirectory = Directory.GetCurrentDirectory();
+
+    string DbPath = Path.Combine(rootDirectory, "data", "snappshare.db");
+
+    options.UseSqlite($"Data Source={DbPath}");
+});
 
 builder.Services.AddControllers(
     options =>
