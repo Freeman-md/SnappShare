@@ -12,3 +12,5 @@
 
 # General
 .env
+
+.fake
