@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using api.Data;
+using api.Enums;
 using api.Interfaces.Services;
 using api.Models;
 using Humanizer;
@@ -73,6 +74,27 @@ public class FileController : ControllerBase
             return BadRequest(new ErrorApiResponse<object>(ex.Message));
 
         }
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetFileDetails(string id) {
+        var file = await _dbContext.FileUploads.FindAsync(id);
+
+        if (file == null)
+        {
+            return NotFound(new ApiResponse<object> {
+                Message = "File Not Found",
+                StatusCode = 404
+            });
+        }
+
+        return Ok(new SuccessApiResponse<object> {
+            Data = new {
+                ExpiryDurationInMinutes = file.ExpiryDuration,
+                file.OriginalUrl,
+                file.CreatedAt,
+            }
+        });
     }
 
     private string ExtractAzureErrorMessage(Azure.RequestFailedException ex)
