@@ -19,23 +19,25 @@ public class BlobService : IBlobService
         _blobServiceClient = blobServiceClient;
     }
 
-    public async Task<string> UploadFileAsync(IFormFile file, string containerName, DateTimeOffset expiryTime)
+    public async Task<(string fileUrl, string fileName)> UploadFileAsync(IFormFile file, string containerName, DateTimeOffset expiryTime)
     {
         var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
         await containerClient.CreateIfNotExistsAsync(PublicAccessType.None);
 
-        var blobClient = containerClient.GetBlobClient(file.FileName);
+        string uniqueFileName = $"{Path.GetFileNameWithoutExtension(file.FileName)}-{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+
+        var blobClient = containerClient.GetBlobClient(uniqueFileName);
 
         using var stream = file.OpenReadStream();
         await blobClient.UploadAsync(stream);
 
-    var metadata = new Dictionary<string, string>
-    {
-        { "expiryTime", expiryTime.ToUnixTimeSeconds().ToString() } // Store as Unix Timestamp
-    };
-    await blobClient.SetMetadataAsync(metadata);
+        var metadata = new Dictionary<string, string>
+            {
+                { "expiryTime", expiryTime.ToUnixTimeSeconds().ToString() }
+            };
+        await blobClient.SetMetadataAsync(metadata);
 
-        return blobClient.Uri.ToString();
+        return (blobClient.Uri.ToString(), uniqueFileName);
     }
 
     public async Task<string> GenerateSasTokenAsync(string blobName, string containerName, DateTimeOffset expirtyTime)

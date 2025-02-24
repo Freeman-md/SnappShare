@@ -13,6 +13,8 @@ public class FileController : ControllerBase
     private readonly ILogger<FileController> _logger;
     private readonly IBlobService _blobService;
 
+    private const string BlobContainerName = "snappshare";
+
     public FileController(ILogger<FileController> logger, IBlobService blobService)
     {
         _logger = logger;
@@ -28,8 +30,9 @@ public class FileController : ControllerBase
             string fileName = fileUpload.File!.FileName;
             DateTimeOffset expiryTime = DateTimeOffset.UtcNow.AddMinutes((double)fileUpload.ExpiryDuration);
 
-            string fileUrl = await _blobService.UploadFileAsync(fileUpload.File!, "snappshare", expiryTime);
-            string sasUrl = await _blobService.GenerateSasTokenAsync(fileName, "snappshare", expiryTime);
+            (_, string uniqueFileName) = await _blobService.UploadFileAsync(fileUpload.File!, BlobContainerName, expiryTime);
+
+            string sasUrl = await _blobService.GenerateSasTokenAsync(uniqueFileName, BlobContainerName, expiryTime);
 
             var response = new SuccessApiResponse<object>()
             {
