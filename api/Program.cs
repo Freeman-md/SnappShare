@@ -1,6 +1,22 @@
+using api.Interfaces.Services;
+using api.Services;
+using Azure.Identity;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
+using Microsoft.Extensions.Azure;
+
 
 var builder = WebApplication.CreateBuilder(args);
+
+var storageAccountName = builder.Configuration["STORAGE_ACCOUNT_NAME"];
+
+builder.Services.AddAzureClients(
+    clientBuilder => {
+        clientBuilder.AddBlobServiceClient(new Uri($"https://{storageAccountName}.blob.core.windows.net"));
+        clientBuilder.UseCredential(new DefaultAzureCredential());
+    }
+);
+
+builder.Services.AddSingleton<IBlobService, BlobService>();
 
 builder.Services.AddControllers(
     options => {

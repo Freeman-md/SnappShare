@@ -14,3 +14,7 @@
 .env
 
 .fake
+
+.vscode/launch.json
+
+credentials.txt
