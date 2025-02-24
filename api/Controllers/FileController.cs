@@ -88,9 +88,11 @@ public class FileController : ControllerBase
             });
         }
 
+        DateTimeOffset expiryTime = file.CreatedAt.AddMinutes((double)file.ExpiryDuration);
+
         return Ok(new SuccessApiResponse<object> {
             Data = new {
-                ExpiryDurationInMinutes = file.ExpiryDuration,
+                ExpiresAt = expiryTime,
                 file.OriginalUrl,
                 file.CreatedAt,
             }
