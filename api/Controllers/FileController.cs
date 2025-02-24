@@ -26,10 +26,9 @@ public class FileController : ControllerBase
         try
         {
             string fileName = fileUpload.File!.FileName;
-            string fileUrl = await _blobService.UploadFileAsync(fileUpload.File!, "snappshare");
-
             DateTimeOffset expiryTime = DateTimeOffset.UtcNow.AddMinutes((double)fileUpload.ExpiryDuration);
 
+            string fileUrl = await _blobService.UploadFileAsync(fileUpload.File!, "snappshare", expiryTime);
             string sasUrl = await _blobService.GenerateSasTokenAsync(fileName, "snappshare", expiryTime);
 
             var response = new SuccessApiResponse<object>()

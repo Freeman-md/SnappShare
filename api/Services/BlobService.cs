@@ -19,7 +19,7 @@ public class BlobService : IBlobService
         _blobServiceClient = blobServiceClient;
     }
 
-    public async Task<string> UploadFileAsync(IFormFile file, string containerName)
+    public async Task<string> UploadFileAsync(IFormFile file, string containerName, DateTimeOffset expiryTime)
     {
         var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
         await containerClient.CreateIfNotExistsAsync(PublicAccessType.None);
@@ -28,6 +28,12 @@ public class BlobService : IBlobService
 
         using var stream = file.OpenReadStream();
         await blobClient.UploadAsync(stream);
+
+    var metadata = new Dictionary<string, string>
+    {
+        { "expiryTime", expiryTime.ToUnixTimeSeconds().ToString() } // Store as Unix Timestamp
+    };
+    await blobClient.SetMetadataAsync(metadata);
 
         return blobClient.Uri.ToString();
     }
