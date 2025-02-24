@@ -6,7 +6,8 @@ using api.Validators;
 namespace api.Models;
 
 [FileOrNoteRequired]
-public class FileUpload {
+public class FileUpload
+{
 
     [JsonPropertyName("file")]
     [AllowedFileExtensions(ErrorMessage = "Invalid file type. Allowed types: .jpg, .png, .pdf, .txt")]
@@ -17,7 +18,7 @@ public class FileUpload {
     [StringLength(200, MinimumLength = 20)]
     public string? Note { get; set; }
 
-    [JsonPropertyName("expiryDuration")]
+    [JsonPropertyName("ExpiryDuration")]
     [Required(ErrorMessage = "Expiry duration is required")]
     public ExpiryDuration ExpiryDuration { get; set; }
 

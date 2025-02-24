@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using api.Interfaces.Services;
 using api.Models;
+using Humanizer;
 using Microsoft.AspNetCore.Mvc;
 
 namespace api.Controllers;
@@ -24,23 +25,53 @@ public class FileController : ControllerBase
 
         try
         {
+            string fileName = fileUpload.File!.FileName;
             string fileUrl = await _blobService.UploadFileAsync(fileUpload.File!, "snappshare");
+
+            DateTimeOffset expiryTime = DateTimeOffset.UtcNow.AddMinutes((double)fileUpload.ExpiryDuration);
+
+            string sasUrl = await _blobService.GenerateSasTokenAsync(fileName, "snappshare", expiryTime);
 
             var response = new SuccessApiResponse<object>()
             {
                 Data = new
                 {
-                    FileUrl = fileUrl,
-                    fileUpload.ExpiryDuration // this should be more descriptive - like "In 10 minutes"
+                ExpiryDuration = $"Expires in {GetHumanReadableDuration((int)fileUpload.ExpiryDuration)}",
+                    FileUrl = sasUrl
                 }
             };
 
             return Ok(response);
         }
-        catch (System.Exception ex)
+        catch (Azure.RequestFailedException ex)
         {
-            _logger.Log(LogLevel.Error, new EventId(), ex, ex.Message);
-            return BadRequest(ex);
+            _logger.LogError(ex, ex.Message);
+
+            return BadRequest(new ErrorApiResponse<object>(
+                ExtractAzureErrorMessage(ex), 400, "Blob Storage Error"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            return BadRequest(new ErrorApiResponse<object>(ex.Message));
+
         }
     }
+
+    private string ExtractAzureErrorMessage(Azure.RequestFailedException ex)
+    {
+        return ex.ErrorCode switch
+        {
+            "BlobAlreadyExists" => "The specified file already exists in the container.",
+            "AuthorizationPermissionMismatch" => "You do not have the correct permissions to upload this file.",
+            "ContainerNotFound" => "The specified container does not exist in Azure Storage.",
+            _ => ex.Message
+        };
+    }
+
+    private string GetHumanReadableDuration(int durationInMinutes)
+{
+    return TimeSpan.FromMinutes(durationInMinutes).Humanize(minUnit: Humanizer.Localisation.TimeUnit.Minute);
+}
+
 }
