@@ -1,0 +1,14 @@
+# API Ignore Rules
+/api/bin/
+/api/obj/
+/api/.vs/
+/api/appsettings.Development.json
+/api/appsettings.json
+/api/Properties/launchSettings.json
+
+# Web Ignore Rules
+/web/node_modules/
+/web/.vite/
+
+# General
+.env
