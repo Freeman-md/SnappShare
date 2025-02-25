@@ -7,7 +7,8 @@
             </div>
         </div>
 
-        <div class="relative z-10 w-full max-w-4xl p-8 text-center justify-center items-center flex flex-col text-white">
+        <div
+            class="relative z-10 w-full max-w-4xl p-8 text-center justify-center items-center flex flex-col text-white">
             <img src="/images/logo.svg" class="w-72" />
             <p class="text-lg mt-8 opacity-80">Upload and share files that expire automatically!</p>
 
@@ -18,8 +19,8 @@
                 <div class="relative border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer transition-all hover:border-purple-500 mt-4 flex flex-col items-center"
                     @dragover.prevent="dragging = true" @dragleave.prevent="dragging = false" @drop.prevent="handleDrop"
                     @click="triggerFileInput" :class="{ 'border-purple-500 bg-blue-50': dragging }">
-                    <input type="file" ref="fileInput" class="hidden" @change="handleFile"
-                        accept=".jpg,.png,.pdf,.txt" />
+                    <input type="file" ref="fileInput" class="hidden" @change="handleFile" 
+                    accept=".jpg,.png,.pdf,.txt" />
 
                     <div v-if="!file" class="flex flex-col items-center">
                         <IconCloudUpload />
@@ -30,7 +31,8 @@
 
                     <div v-else class="flex items-center justify-between w-full bg-white p-3 rounded-md shadow-sm">
                         <p class="text-purple-600 font-semibold truncate w-full">{{ file.name }}</p>
-                        <button @click.stop="removeFile" class="text-red-500 border rounded-full w-4 h-4 flex items-center justify-center border-transparent cursor-pointer hover:border-red-500">
+                        <button @click.stop="removeFile"
+                            class="text-red-500 border rounded-full w-4 h-4 flex items-center justify-center border-transparent cursor-pointer hover:border-red-500">
                             <IconX class="w-14" />
                         </button>
                     </div>
@@ -61,20 +63,7 @@
                     {{ loading ? "Uploading..." : "Upload File" }}
                 </button>
 
-
-
-                <transition name="fade">
-                    <div v-if="fileUrl" class="p-4 bg-green-100 border border-green-300 rounded-lg text-center mt-4">
-                        <p class="text-green-700 font-semibold">File Uploaded Successfully!</p>
-                        <div class="mt-2 flex items-center justify-between bg-white border p-2 rounded-md">
-                            <input type="text" :value="fileUrl" readonly
-                                class="w-full text-sm text-gray-700 outline-none" />
-                            <button @click="copyToClipboard" class="ml-2 text-blue-500 hover:text-blue-600">
-                                📋 Copy
-                            </button>
-                        </div>
-                    </div>
-                </transition>
+                <small class="text-red-500" v-show="errorMessage">{{ errorMessage }}</small>
             </div>
         </div>
     </div>
@@ -84,10 +73,11 @@
 import { ref } from "vue";
 import { IconCloudUpload, IconX } from '@tabler/icons-vue'
 
+const router = useRouter()
 const file = ref(null);
-const fileUrl = ref("");
 const expiry = ref(10);
 const loading = ref(false);
+const errorMessage = ref("");
 const dragging = ref(false);
 const fileInput = ref(null);
 const apiUrl = useRuntimeConfig().public.apiBase;
@@ -111,42 +101,48 @@ const triggerFileInput = () => {
 };
 
 const uploadFile = async () => {
-  if (!file.value) return;
-  
-  loading.value = true;
-  
-  const formData = new FormData();
-  formData.append("file", file.value);
-  formData.append("ExpiryDuration", expiry.value);
+    if (!file.value) return;
 
-  try {
-const response = await fetch(`${apiUrl}/File/upload`, {
-      method: "POST",
-      body: formData,
+    loading.value = true;
+
+    const formData = new FormData();
+    formData.append("file", file.value);
+    formData.append("ExpiryDuration", expiry.value);
+
+    const { error, data, status } = await $fetch(`${apiUrl}/File/upload`, {
+        method: "POST",
+        body: formData,
     });
 
-    const result = await response.json();
-    if (result.data) {
-      fileUrl.value = result.data.FileAccessUrl;
-      
-      file.value = null;
-      expiry.value = 10;
-      
-      window.location.href = `/file/${result.data.id}`;
+    if (data) {
+        router.push(`/file/${data.id}`);
 
-    console.log(result)
+        file.value = null;
+        expiry.value = 10;
     }
-  } catch (error) {
-    console.error("Upload failed:", error);
-  } finally {
-    loading.value = false;
-  }
-};
 
+    if (error && error.value) {
+        const errors = error.value.data.errors;
 
-const copyToClipboard = () => {
-    navigator.clipboard.writeText(fileUrl.value);
-};
+        if (errors !== null) {
+            Object.keys(errors).forEach(key => {
+                if (Array.isArray(errors[key])) {
+                    errorMessage.value = errors[key][0]
+                } else {
+                    errorMessage.value = errors[key]
+                }
+
+                return;
+            })
+        }
+    }
+
+    setInterval(() => {
+        errorMessage.value = "";
+    }, 3000);
+
+    loading.value = false
+}
 </script>
 
 <style>
