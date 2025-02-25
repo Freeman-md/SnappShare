@@ -90,6 +90,7 @@ const expiry = ref(10);
 const loading = ref(false);
 const dragging = ref(false);
 const fileInput = ref(null);
+const apiUrl = useRuntimeConfig().public.apiBase;
 
 const handleFile = (event) => {
     file.value = event.target.files[0];
@@ -119,7 +120,7 @@ const uploadFile = async () => {
   formData.append("ExpiryDuration", expiry.value);
 
   try {
-    const response = await fetch("http://localhost:5028/File/upload", {
+const response = await fetch(`${apiUrl}/File/upload`, {
       method: "POST",
       body: formData,
     });

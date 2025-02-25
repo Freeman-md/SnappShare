@@ -35,7 +35,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: MyAllowSpecificOrigins,
                       policy =>
                       {
-                          policy.WithOrigins("http://localhost:3000")
+                          policy.WithOrigins(["http://localhost:3000", "https://snappshare.vercel.app"])
                                 .AllowAnyMethod()  
                                 .AllowAnyHeader()  
                                 .AllowCredentials();

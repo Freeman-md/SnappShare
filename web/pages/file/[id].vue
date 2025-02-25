@@ -1,6 +1,7 @@
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600">
-    <div class="relative z-10 max-w-sm sm:max-w-xl w-full bg-white p-8 rounded-2xl shadow-2xl text-center transition-all transform hover:scale-105">
+    <div
+      class="relative z-10 max-w-sm sm:max-w-xl w-full bg-white p-8 rounded-2xl shadow-2xl text-center transition-all transform hover:scale-105">
 
       <div v-if="loading" class="flex items-center justify-center mt-4">
         <svg class="animate-spin h-10 w-10 text-blue-500" viewBox="0 0 24 24">
@@ -53,9 +54,10 @@ const fileUrl = ref("");
 const expiresAt = ref(null);
 const remainingTime = ref(0);
 const loading = ref(true);
+const apiUrl = useRuntimeConfig().public.apiBase;
 
 const { data, status } = await useAsyncData(`file-${fileId}`, async () => {
-  const response = await fetch(`http://localhost:5028/file/${fileId}`);
+  const response = await fetch(`${apiUrl}/file/${fileId}`);
   return response.json();
 });
 
