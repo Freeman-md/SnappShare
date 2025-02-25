@@ -19,7 +19,7 @@
                 <div class="relative border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer transition-all hover:border-purple-500 mt-4 flex flex-col items-center"
                     @dragover.prevent="dragging = true" @dragleave.prevent="dragging = false" @drop.prevent="handleDrop"
                     @click="triggerFileInput" :class="{ 'border-purple-500 bg-blue-50': dragging }">
-                    <input type="file" ref="fileInput" class="hidden" @change="handleFile" />
+                    <input type="file" ref="fileInput" class="hidden" @change="handleFile" accept=".jpg,.png,.pdf,.txt" />
 
                     <div v-if="!file" class="flex flex-col items-center">
                         <IconCloudUpload />
