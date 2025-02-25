@@ -19,8 +19,7 @@
                 <div class="relative border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer transition-all hover:border-purple-500 mt-4 flex flex-col items-center"
                     @dragover.prevent="dragging = true" @dragleave.prevent="dragging = false" @drop.prevent="handleDrop"
                     @click="triggerFileInput" :class="{ 'border-purple-500 bg-blue-50': dragging }">
-                    <input type="file" ref="fileInput" class="hidden" @change="handleFile" 
-                    accept=".jpg,.png,.pdf,.txt" />
+                    <input type="file" ref="fileInput" class="hidden" @change="handleFile" />
 
                     <div v-if="!file" class="flex flex-col items-center">
                         <IconCloudUpload />
@@ -109,20 +108,21 @@ const uploadFile = async () => {
     formData.append("file", file.value);
     formData.append("ExpiryDuration", expiry.value);
 
-    const { error, data, status } = await $fetch(`${apiUrl}/File/upload`, {
-        method: "POST",
-        body: formData,
-    });
+    try {
+        const { data } = await $fetch(`${apiUrl}/File/upload`, {
+            method: "POST",
+            body: formData,
+        });
 
-    if (data) {
-        router.push(`/file/${data.id}`);
+        if (data) {
+            router.push(`/file/${data.id}`);
 
-        file.value = null;
-        expiry.value = 10;
-    }
+            file.value = null;
+            expiry.value = 10;
+        }
 
-    if (error && error.value) {
-        const errors = error.value.data.errors;
+    } catch (error) {
+        const errors = error.data.errors;
 
         if (errors !== null) {
             Object.keys(errors).forEach(key => {
@@ -135,13 +135,14 @@ const uploadFile = async () => {
                 return;
             })
         }
+
+        setInterval(() => {
+            errorMessage.value = "";
+        }, 3000);
+
+    } finally {
+        loading.value = false
     }
-
-    setInterval(() => {
-        errorMessage.value = "";
-    }, 3000);
-
-    loading.value = false
 }
 </script>
 
