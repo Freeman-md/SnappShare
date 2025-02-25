@@ -44,13 +44,20 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddSingleton<IBlobService, BlobService>();
 
-builder.Services.AddDbContext<SnappshareContext>(options => {
-    string rootDirectory = Directory.GetCurrentDirectory();
+string dbFolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SnappShare");
+string dbPath = Path.Combine(dbFolderPath, "snappshare.db");
 
-    string DbPath = Path.Combine(rootDirectory, "data", "snappshare.db");
+// Ensure the database folder exists
+if (!Directory.Exists(dbFolderPath))
+{
+    Directory.CreateDirectory(dbFolderPath);
+}
 
-    options.UseSqlite($"Data Source={DbPath}");
+builder.Services.AddDbContext<SnappshareContext>(options =>
+{
+    options.UseSqlite($"Data Source={dbPath}");
 });
+
 
 builder.Services.AddControllers(
     options =>
