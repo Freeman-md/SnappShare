@@ -28,6 +28,20 @@ builder.Services.AddAzureClients(
     }
 );
 
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+                      policy =>
+                      {
+                          policy.WithOrigins("http://localhost:3000")
+                                .AllowAnyMethod()  
+                                .AllowAnyHeader()  
+                                .AllowCredentials();
+                      });
+});
+
 builder.Services.AddSingleton<IBlobService, BlobService>();
 
 builder.Services.AddDbContext<SnappshareContext>(options => {
@@ -48,6 +62,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+app.UseCors(MyAllowSpecificOrigins);
 
 if (app.Environment.IsDevelopment())
 {

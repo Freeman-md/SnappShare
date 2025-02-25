@@ -53,7 +53,7 @@ public class FileController : ControllerBase
             {
                 Data = new
                 {
-                    UniqueId = newFile.Id,
+                    newFile.Id,
                     ExpiryDuration = $"Expires in {GetHumanReadableDuration((int)fileUpload.ExpiryDuration)}",
                     FileAccessUrl = $"{Request.Scheme}://{Request.Host}/file/{newFile.Id}"
                 }
@@ -77,27 +77,34 @@ public class FileController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetFileDetails(string id) {
+    public async Task<IActionResult> GetFileDetails(string id)
+    {
         var file = await _dbContext.FileUploads.FindAsync(id);
 
         if (file == null)
         {
-            return NotFound(new ApiResponse<object> {
+            return NotFound(new ApiResponse<object>
+            {
                 Message = "File Not Found",
                 StatusCode = 404
             });
         }
 
+        // Calculate expiry time
         DateTimeOffset expiryTime = file.CreatedAt.AddMinutes((double)file.ExpiryDuration);
+        bool isExpired = DateTimeOffset.UtcNow >= expiryTime;
 
-        return Ok(new SuccessApiResponse<object> {
-            Data = new {
+        return Ok(new SuccessApiResponse<object>
+        {
+            Data = new
+            {
                 ExpiresAt = expiryTime,
-                file.OriginalUrl,
                 file.CreatedAt,
+                OriginalUrl = isExpired ? null : file.OriginalUrl
             }
         });
     }
+
 
     private string ExtractAzureErrorMessage(Azure.RequestFailedException ex)
     {
