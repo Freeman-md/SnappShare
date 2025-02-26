@@ -104,6 +104,8 @@ const triggerFileInput = () => {
     fileInput.value.click();
 };
 
+//TODO: Reject file upload immediately, maybe in frontend if file is greater than 
+
 const uploadFile = async () => {
     if (!file.value) return;
 
@@ -114,10 +116,11 @@ const uploadFile = async () => {
     formData.append("ExpiryDuration", expiry.value);
 
     try {
-        // const { data } = await $fetch(, {
-        //     method: "POST",
-        //     body: formData,
-        // });
+        if (file.value.size > 5 * 1024 * 1024) {
+            errorMessage.value = "File must not be greater than 5MB";
+
+            return
+        }
 
         const { data } = await axios.post(`${apiUrl}/File/upload`, formData, {
             headers: { "Content-Type": "multipart/form-data" },
@@ -154,13 +157,13 @@ const uploadFile = async () => {
             errorMessage.value = error.message
         }
 
-        setInterval(() => {
-            errorMessage.value = "";
-        }, 3000);
-
     } finally {
         loading.value = false
         uploadProgress.value = 0
+
+        setInterval(() => {
+            errorMessage.value = "";
+        }, 3000);
     }
 }
 </script>
