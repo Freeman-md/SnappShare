@@ -19,13 +19,13 @@
                 <div class="relative border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer transition-all hover:border-purple-500 mt-4 flex flex-col items-center"
                     @dragover.prevent="dragging = true" @dragleave.prevent="dragging = false" @drop.prevent="handleDrop"
                     @click="triggerFileInput" :class="{ 'border-purple-500 bg-blue-50': dragging }">
-                    <input type="file" ref="fileInput" class="hidden" @change="handleFile" accept=".jpg,.png,.pdf,.txt" />
+                    <input type="file" ref="fileInput" class="hidden" @change="handleFile" />
 
                     <div v-if="!file" class="flex flex-col items-center">
                         <IconCloudUpload />
                         <p class="text-gray-600">{{ dragging ? "Drop your file here" : "Click or Drag & Drop to Upload"
                         }}</p>
-                        <small class="text-gray-500">Allowed: JPG, PNG, PDF, TXT</small>
+                        <small class="text-gray-500">Allowed: Images, Documents, Vides; Max File Size (5MB)</small>
                     </div>
 
                     <div v-else class="flex items-center justify-between w-full bg-white p-3 rounded-md shadow-sm">
@@ -51,16 +51,19 @@
 
                 </div>
 
-                <button @click="uploadFile" class="w-full p-3 text-white font-bold rounded-lg flex justify-center items-center transition-all 
-         bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 
-         mt-4 disabled:opacity-50 cursor-pointer" :disabled="loading || !file">
-                    <svg v-if="loading" class="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
-                        </circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0116 0H4z"></path>
-                    </svg>
-                    {{ loading ? "Uploading..." : "Upload File" }}
+                <button @click="uploadFile" class="w-full p-3 text-white font-bold rounded-lg flex justify-center items-center transition-all relative overflow-hidden mt-4 disabled:opacity-50 cursor-pointer
+         bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:cursor-progress"
+                    :disabled="loading || !file">
+                    <div class="absolute top-0 left-0 h-full transition-all" :style="{
+                        width: uploadProgress + '%',
+                        background: 'linear-gradient(to right, #155dfc, #9810fa)',
+                    }"></div>
+
+                    <span class="relative z-10">
+                        {{ loading ? `Uploading... ${uploadProgress}%` : "Upload File" }}
+                    </span>
                 </button>
+
 
                 <small class="text-red-500" v-show="errorMessage">{{ errorMessage }}</small>
             </div>
@@ -69,7 +72,8 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref } from "vue"
+import axios from "axios"
 import { IconCloudUpload, IconX } from '@tabler/icons-vue'
 
 const router = useRouter()
@@ -79,6 +83,7 @@ const loading = ref(false);
 const errorMessage = ref("");
 const dragging = ref(false);
 const fileInput = ref(null);
+const uploadProgress = ref(0)
 const apiUrl = useRuntimeConfig().public.apiBase;
 
 const handleFile = (event) => {
@@ -109,22 +114,33 @@ const uploadFile = async () => {
     formData.append("ExpiryDuration", expiry.value);
 
     try {
-        const { data } = await $fetch(`${apiUrl}/File/upload`, {
-            method: "POST",
-            body: formData,
+        // const { data } = await $fetch(, {
+        //     method: "POST",
+        //     body: formData,
+        // });
+
+        const { data } = await axios.post(`${apiUrl}/File/upload`, formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+            onUploadProgress: (progressEvent) => {
+                uploadProgress.value = Math.round(
+                    (progressEvent.loaded / progressEvent.total) * 100
+                );
+            },
         });
 
         if (data) {
-            router.push(`/file/${data.id}`);
+            router.push(`/file/${data.data.id}`);
 
             file.value = null;
             expiry.value = 10;
         }
 
     } catch (error) {
-        const errors = error.data.errors;
+        const response = error.response.data;
 
-        if (errors !== null) {
+        if (response !== null && response !== '') {
+            const errors = response.errors
+
             Object.keys(errors).forEach(key => {
                 if (Array.isArray(errors[key])) {
                     errorMessage.value = errors[key][0]
@@ -134,6 +150,8 @@ const uploadFile = async () => {
 
                 return;
             })
+        } else {
+            errorMessage.value = error.message
         }
 
         setInterval(() => {
@@ -142,6 +160,7 @@ const uploadFile = async () => {
 
     } finally {
         loading.value = false
+        uploadProgress.value = 0
     }
 }
 </script>
