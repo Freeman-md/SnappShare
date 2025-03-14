@@ -6,27 +6,30 @@ using Microsoft.Extensions.Azure;
 using DotNetEnv;
 using api.Data;
 using Microsoft.EntityFrameworkCore;
+using api.Interfaces.Repositories;
+using api.Repositories;
+using api.Configs;
+using Microsoft.Extensions.Options;
 
 Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
-var storageAccountName = builder.Configuration["STORAGE_ACCOUNT_NAME"];
+builder.Services.Configure<StorageOptions>(builder.Configuration.GetSection(StorageOptions.Key));
 
-
-builder.Services.AddAzureClients(
-    clientBuilder =>
+builder.Services.AddAzureClients(clientBuilder =>
+{
+    var storageOptions = builder.Configuration.GetSection(StorageOptions.Key).Get<StorageOptions>();
+    
+    clientBuilder.AddBlobServiceClient(new Uri($"https://{storageOptions.AccountName}.blob.core.windows.net"));
+    clientBuilder.UseCredential(new DefaultAzureCredential(new DefaultAzureCredentialOptions
     {
-        clientBuilder.AddBlobServiceClient(new Uri($"https://{storageAccountName}.blob.core.windows.net"));
-        clientBuilder.UseCredential(new DefaultAzureCredential(new DefaultAzureCredentialOptions
-        {
-            ExcludeAzureCliCredential = true,
-            ExcludeVisualStudioCredential = true,
-            ExcludeVisualStudioCodeCredential = true,
-            ExcludeInteractiveBrowserCredential = true
-        }));
-    }
-);
+        ExcludeAzureCliCredential = true,
+        ExcludeVisualStudioCredential = true,
+        ExcludeVisualStudioCodeCredential = true,
+        ExcludeInteractiveBrowserCredential = true
+    }));
+});
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
@@ -43,6 +46,8 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddSingleton<IBlobService, BlobService>();
+builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<IFileRepository, FileRepository>();
 
 string dbFolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SnappShare");
 string dbPath = Path.Combine(dbFolderPath, "snappshare.db");
