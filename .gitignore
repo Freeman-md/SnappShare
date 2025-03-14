@@ -1,11 +1,11 @@
 # API Ignore Rules
-/api/bin/
-/api/obj/
-/api/.vs/
-/api/appsettings.Development.json
-/api/appsettings.json
-/api/Properties/launchSettings.json
-/api/Data/snappshare.db
+/**/bin/
+/**/obj/
+/**/.vs/
+/**/appsettings.Development.json
+/**/appsettings.json
+/**/Properties/launchSettings.json
+/**/Data/snappshare.db
 
 # Web Ignore Rules
 /web/node_modules/

@@ -30,6 +30,7 @@ public class FileUpload
 
     [JsonPropertyName("ExpiryDuration")]
     [Required(ErrorMessage = "Expiry duration is required")]
+    [EnumDataType(typeof(ExpiryDuration))]
     public ExpiryDuration ExpiryDuration { get; set; }
 
 }
