@@ -52,7 +52,7 @@
                 </div>
 
                 <button @click="uploadFile" class="w-full p-3 text-white font-bold rounded-lg flex justify-center items-center transition-all relative overflow-hidden mt-4 disabled:opacity-50 cursor-pointer
-         bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:cursor-progress"
+         bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 in-active:cursor-pointer disabled:active:cursor-progress"
                     :disabled="loading || !file">
                     <div class="absolute top-0 left-0 h-full transition-all" :style="{
                         width: uploadProgress + '%',
@@ -139,6 +139,19 @@ const uploadFile = async () => {
         }
 
     } catch (error) {
+        if (!error.response && error.message) {
+            switch (error.code) {
+                case "ERR_NETWORK":
+                    errorMessage.value = "Network Error. Please check your internet and try again"
+                    break;
+                default:
+                    errorMessage.value = error.message
+                    break;
+            }
+
+            return
+        }
+
         const response = error.response.data;
 
         if (response !== null && response !== '') {
