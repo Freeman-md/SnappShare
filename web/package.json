@@ -11,7 +11,8 @@
     "lint": "yarn lint:eslint && yarn lint:prettier",
     "lint:eslint": "eslint .",
     "lint:prettier": "prettier . --check",
-    "lintfix": "eslint . --fix && prettier --write --list-different ."
+    "lintfix": "eslint . --fix && prettier --write --list-different .",
+    "test": "vitest"
   },
   "dependencies": {
     "@nuxt/eslint": "1.2.0",
