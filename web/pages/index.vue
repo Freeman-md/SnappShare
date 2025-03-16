@@ -17,7 +17,7 @@
 
                 <div class="relative border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer transition-all hover:border-purple-500 mt-4 flex flex-col items-center"
                     :class="{ 'border-purple-500 bg-blue-50': dragging }" @dragover.prevent="dragging = true"
-                    @dragleave.prevent="dragging = false" @drop.prevent="handleDrop" @click="triggerFileInput">
+                    @dragleave.prevent="dragging = false" @drop.prevent="handleDrop" @click="triggerFileInput" id="dropzone">
                     <input ref="fileInput" type="file" class="hidden" @change="handleFile">
 
                     <div v-if="!file" class="flex flex-col items-center">
@@ -30,8 +30,8 @@
                     <div v-else class="flex items-center justify-between w-full bg-white p-3 rounded-md shadow-sm">
                         <p class="text-purple-600 font-semibold truncate w-full">{{ file.name }}</p>
                         <button
-                            class="text-red-500 border rounded-full w-4 h-4 flex items-center justify-center border-transparent cursor-pointer hover:border-red-500"
-                            @click.stop="removeFile">
+                            id="remove-file-button"
+                            class="text-red-500 border rounded-full w-4 h-4 flex items-center justify-center border-transparent cursor-pointer hover:border-red-500" @click.stop="removeFile">
                             <IconX class="w-14" />
                         </button>
                     </div>
@@ -54,7 +54,7 @@
                 <button
                     class="w-full p-3 text-white font-bold rounded-lg flex justify-center items-center transition-all relative overflow-hidden mt-4 disabled:opacity-50 cursor-pointer
          bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 in-active:cursor-pointer disabled:active:cursor-progress"
-                    :disabled="loading || !file" @click="uploadFile">
+                    :disabled="loading || !file" @click="uploadFile" id="upload-file-button">
                     <div
 class="absolute top-0 left-0 h-full transition-all" :style="{
                         width: uploadProgress + '%',
@@ -67,7 +67,7 @@ class="absolute top-0 left-0 h-full transition-all" :style="{
                 </button>
 
 
-                <small v-show="errorMessage" class="text-red-500">{{ errorMessage }}</small>
+                <small id="error-message" v-show="errorMessage" class="text-red-500">{{ errorMessage }}</small>
             </div>
         </div>
     </div>

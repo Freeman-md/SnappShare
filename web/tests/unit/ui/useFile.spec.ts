@@ -26,8 +26,8 @@ describe('useFile', () => {
     test('handleFile() updates file correctly', () => {
         composable.handleFile({ target: { files: [mockFile] } } as unknown as Event);
 
-        expect(file.value).toBe(mockFile);
-        expect(composable.file.value).toBe(mockFile);
+        expect(file.value).toStrictEqual(mockFile);
+        expect(composable.file.value).toStrictEqual(mockFile);
     });
 
     test('handleDrop() updates file when dragging a file', () => {
@@ -41,16 +41,16 @@ describe('useFile', () => {
         composable.handleDrop(event);
 
         expect(event.preventDefault).toHaveBeenCalled();
-        expect(file.value).toBe(mockFile);
-        expect(composable.file.value).toBe(mockFile);
+        expect(file.value).toStrictEqual(mockFile);
+        expect(composable.file.value).toStrictEqual(mockFile);
         expect(composable.dragging.value).toBeFalsy()
     });
 
     test('removeFile() sets file to null', () => {
         composable.handleFile({ target: { files: [mockFile] } } as unknown as Event);
 
-        expect(file.value).toBe(mockFile);
-        expect(composable.file.value).toBe(mockFile);
+        expect(file.value).toStrictEqual(mockFile);
+        expect(composable.file.value).toStrictEqual(mockFile);
 
         composable.removeFile();
 
