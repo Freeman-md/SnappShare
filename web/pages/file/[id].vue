@@ -5,15 +5,16 @@
 
       <div v-if="loading" class="flex items-center justify-center mt-4">
         <svg class="animate-spin h-10 w-10 text-blue-500" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0116 0H4z"></path>
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0116 0H4z"/>
         </svg>
       </div>
 
       <template v-else>
         <div v-if="!isExpired" class="text-gray-800">
           <h1 class="text-2xl font-bold">File Expires In</h1>
-          <p class="text-5xl font-extrabold bg-clip-text text-transparent 
+          <p
+class="text-5xl font-extrabold bg-clip-text text-transparent 
               bg-gradient-to-r from-blue-500 to-purple-400 animate-pulse mt-2">
             {{ countdown }}
           </p>
@@ -26,11 +27,13 @@
 
         <div v-if="fileUrl && !isExpired" class="mt-6 space-y-4">
           <div class="mt-4 flex space-x-4 items-center justify-center">
-            <button type="button" @click="shareFile"
-              class="flex space-x-2 items-center border border-gray-200 p-2 rounded-full cursor-pointer">
+            <button
+type="button" class="flex space-x-2 items-center border border-gray-200 p-2 rounded-full cursor-pointer"
+              @click="shareFile">
               <IconShare width="20" /> <span>Share</span>
             </button>
-            <a :href="fileUrl" target="_blank" rel="noopener"
+            <a
+:href="fileUrl" target="_blank" rel="noopener"
               class="flex space-x-2 items-center p-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white">
               👀 View File
             </a>
