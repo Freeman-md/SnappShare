@@ -24,7 +24,7 @@
                         <IconCloudUpload />
                         <p class="text-gray-600">{{ dragging ? "Drop your file here" : "Click or Drag & Drop to Upload"
                         }}</p>
-                        <small class="text-gray-500">Allowed: Images, Documents, Vides; Max File Size (5MB)</small>
+                        <small class="text-gray-500">Allowed: Images, Documents, Videos; Max File Size (5MB)</small>
                     </div>
 
                     <div v-else class="flex items-center justify-between w-full bg-white p-3 rounded-md shadow-sm">
@@ -80,6 +80,7 @@ import { useFile } from "~/composables/ui/useFile"
 
 const file = ref(null);
 const expiry = ref(10);
+const { public: { apiBase } } = useRuntimeConfig();
 
 const {
     dragging,
@@ -94,7 +95,8 @@ const {
 
 const { loading, errorMessage, uploadProgress, uploadFile } = useUpload({
     file,
-    expiry
+    expiry,
+    apiUrl: apiBase
 })
 
 </script>

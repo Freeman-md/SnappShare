@@ -13,12 +13,14 @@ describe('useFile', () => {
         composable = useFile({ file });
     });
 
-    test('useFile() initializes file with null value', () => {
+    test('should initialize correctly', () => {
         expect(composable.file.value).toBeNull();
-    });
-
-    test('useFile() initializes dragging with false', () => {
         expect(composable.dragging.value).toBeFalsy();
+        expect(composable.fileInput.value).toBeNull();
+        expect(composable.handleDrop).toBeDefined();
+        expect(composable.handleFile).toBeDefined();
+        expect(composable.removeFile).toBeDefined();
+        expect(composable.triggerFileInput).toBeDefined();
     });
 
     test('handleFile() updates file correctly', () => {

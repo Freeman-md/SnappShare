@@ -1,16 +1,17 @@
 import { ref } from "vue"
+import { useRouter } from 'vue-router'
 import axios, { type AxiosError, type AxiosProgressEvent } from "axios"
 
-export const useUpload = ({ file, expiry }: {
+export const useUpload = ({ file, expiry, apiUrl }: {
     file: Ref<File | null>,
-    expiry: Ref<number>
+    expiry: Ref<number>,
+    apiUrl: string
 }) => {
     const router = useRouter()
 
     const loading = ref(false);
     const errorMessage = ref("");
     const uploadProgress = ref(0)
-    const apiUrl = useRuntimeConfig().public.apiBase;
 
     const validateFile = (file: File): boolean => {
         if (!file) return false;
@@ -50,11 +51,12 @@ export const useUpload = ({ file, expiry }: {
         if (response?.errors) {
             errorMessage.value = (Object.values(response.errors).flat()[0] as string) || "An error occurred.";
         } else {
-            errorMessage.value = (error as Error).message;
+            errorMessage.value = (error as Error).message || "An unknown error occurred."; 
         }
     
         setTimeout(() => (errorMessage.value = ""), 3000);
     };
+    
     
     const uploadFile = async () => {
         if (!file.value || !validateFile(file.value)) return;
@@ -66,7 +68,6 @@ export const useUpload = ({ file, expiry }: {
             if (data) {
                 router.push(`/file/${data.data.id}`);
                 file.value = null;
-                expiry.value = 10;
             }
         } catch (error) {
             handleUploadError(error as AxiosError);
