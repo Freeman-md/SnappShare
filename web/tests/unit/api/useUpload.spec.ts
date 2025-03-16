@@ -2,9 +2,10 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ref } from "vue";
 import axios from "axios";
 import { useUpload } from "~/composables/api/useUpload";
-import { useRouter } from "vue-router";
 
 vi.mock("axios");
+
+const mockedAxiosPost = vi.mocked(axios.post);
 
 const mockRouterPush = vi.fn()
 
@@ -56,11 +57,11 @@ describe('useUpload', () => {
     test('sendFileToServer() calls API with correct payload', async () => {
         file.value = mockFile;
 
-        axios.post.mockResolvedValue({ data: { data: { id: "123ABC" } } });
+        mockedAxiosPost.mockResolvedValue({ data: { data: { id: "123ABC" } } });
 
         await composable.uploadFile();
 
-        expect(axios.post).toHaveBeenCalledWith(
+        expect(mockedAxiosPost).toHaveBeenCalledWith(
             "https://mock-api.com/File/upload",
             expect.any(FormData),
             expect.objectContaining({
@@ -72,7 +73,7 @@ describe('useUpload', () => {
     test('handleUploadError() sets correct error messages for network failure', async () => {
         file.value = mockFile;
 
-        axios.post.mockRejectedValue({ code: "ERR_NETWORK", message: "Network Error" });
+        mockedAxiosPost.mockRejectedValue({ code: "ERR_NETWORK", message: "Network Error" });
 
         await composable.uploadFile();
 
@@ -82,7 +83,7 @@ describe('useUpload', () => {
     test('uploadFile() resets state after upload and calls router.push()', async () => {
         file.value = mockFile;
 
-        axios.post.mockResolvedValue({ data: { data: { id: "123ABC" } } });
+        mockedAxiosPost.mockResolvedValue({ data: { data: { id: "123ABC" } } });
 
         await composable.uploadFile();
 
