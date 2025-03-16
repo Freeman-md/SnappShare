@@ -65,6 +65,7 @@ export const useUpload = ({ file, expiry, apiUrl }: {
     
         try {
             const { data } = await sendFileToServer(file.value, expiry.value);
+
             if (data) {
                 router.push(`/file/${data.data.id}`);
                 file.value = null;

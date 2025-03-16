@@ -13,8 +13,6 @@ export const useFile = ({
 
         if (!target.files) return
 
-        console.log(file)
-
         file.value = target.files[0];
     };
 

@@ -2,8 +2,17 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ref } from "vue";
 import axios from "axios";
 import { useUpload } from "~/composables/api/useUpload";
+import { useRouter } from "vue-router";
 
 vi.mock("axios");
+
+const mockRouterPush = vi.fn()
+
+vi.mock("vue-router", () => ({
+    useRouter: () => ({
+        push: mockRouterPush,
+    }),
+}));
 
 describe('useUpload', () => {
     let file: Ref<File | null>;
@@ -70,15 +79,18 @@ describe('useUpload', () => {
         expect(composable.errorMessage.value).toBe("Network Error");
     });
 
-    test('uploadFile() resets state after upload', async () => {
+    test('uploadFile() resets state after upload and calls router.push()', async () => {
         file.value = mockFile;
 
-        axios.post.mockResolvedValue({ data: { id: "123ABC" } });
+        axios.post.mockResolvedValue({ data: { data: { id: "123ABC" } } });
 
         await composable.uploadFile();
 
         expect(composable.loading.value).toBe(false);
         expect(composable.uploadProgress.value).toBe(0);
-        // expect(file.value).toBeNull();
+        expect(file.value).toBeNull();
+
+        expect(mockRouterPush).toHaveBeenCalledOnce();
+        expect(mockRouterPush).toHaveBeenCalledWith("/file/123ABC");
     });
 });
