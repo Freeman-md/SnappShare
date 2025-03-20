@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace api.Models;
 
-public enum Status {
+public enum FileEntryStatus {
     Pending,
     Completed,
     Failed
@@ -22,9 +22,6 @@ public class FileEntry {
     [MaxLength(20)]
     public required string FileExtension { get; set; }
 
-    [NotMapped]
-    public string FullFileName => $"{FileName}.{FileExtension}";
-
     [Required]
     public int TotalChunks { get; set; }
 
@@ -34,11 +31,15 @@ public class FileEntry {
     public long FileSize { get; set; }
 
     [MaxLength(64)]
-    public string? FileHash { get; set; } 
+    public required string FileHash { get; set; } 
 
     [Required]
-    [EnumDataType(typeof(Status))]
-    public Status Status { get; set; } = Status.Pending;
+    [MaxLength(500)]
+    public required string FileUrl { get; set; }
+
+    [Required]
+    [EnumDataType(typeof(FileEntryStatus))]
+    public FileEntryStatus Status { get; set; } = FileEntryStatus.Pending;
 
     public bool IsLocked { get; set; } = false;
 
