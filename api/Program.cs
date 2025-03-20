@@ -48,6 +48,8 @@ builder.Services.AddCors(options =>
 builder.Services.AddSingleton<IBlobService, BlobService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IFileRepository, FileRepository>();
+builder.Services.AddScoped<IFileEntryRepository, FileEntryRepository>();
+builder.Services.AddScoped<IChunkRepository, ChunkRepository>();
 
 string dbFolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SnappShare");
 string dbPath = Path.Combine(dbFolderPath, "snappshare.db");
