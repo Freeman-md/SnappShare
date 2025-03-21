@@ -43,13 +43,13 @@ public class FileEntry {
 
     public bool IsLocked { get; set; } = false;
 
-    [NotMapped]
+    [NotMapped] // TODO: Used to auto-unlock files locked for over 5 minutes (e.g. due to connection loss). When resuming upload, check if lock is still valid to avoid permanent lock.
     public bool IsLockExpired => LockedAt.HasValue && (DateTime.UtcNow - LockedAt.Value).TotalMinutes > 5;
 
     public DateTime CreatedAt { get; set; }  = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; }  = DateTime.UtcNow;
     public DateTime? LockedAt { get; set; }
-    public DateTime ExpiresAt { get; set; }  
+    public DateTime? ExpiresAt { get; set; }  
 
     public ICollection<Chunk> Chunks { get; set; } = new List<Chunk>();
 

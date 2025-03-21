@@ -2,6 +2,8 @@ using System;
 using api.Data;
 using api.Interfaces.Repositories;
 using api.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace api.Repositories;
 
@@ -14,9 +16,12 @@ public class FileEntryRepository : IFileEntryRepository
         _dbContext = dbContext;
     }
 
-    public Task<FileEntry> CreateFileEntry(FileEntry fileEntry)
+    public async Task<FileEntry> CreateFileEntry(FileEntry fileEntry)
     {
-        throw new NotImplementedException();
+        _dbContext.FileEntries.Add(fileEntry);
+        await _dbContext.SaveChangesAsync();
+
+        return fileEntry;
     }
 
     public Task DeleteExpiredFiles(DateTime expirationDate)
@@ -24,33 +29,62 @@ public class FileEntryRepository : IFileEntryRepository
         throw new NotImplementedException();
     }
 
-    public Task<FileEntry?> FindFileEntryByFileHash(string fileHash)
+    public async Task<FileEntry?> FindFileEntryByFileHash(string fileHash)
     {
-        throw new NotImplementedException();
+        return await _dbContext.FileEntries.FirstOrDefaultAsync((fileEntry) => fileEntry.FileHash == fileHash);
     }
 
-    public Task<FileEntry?> FindFileEntryById(string fileId)
+    public async Task<FileEntry?> FindFileEntryById(string fileId)
     {
-        throw new NotImplementedException();
+        return await _dbContext.FileEntries.FindAsync(fileId);
     }
 
-    public Task LockFile(string fileId)
+    public async Task LockFile(string fileId)
     {
-        throw new NotImplementedException();
+        FileEntry? fileEntry = await FindFileEntryById(fileId);
+
+        if (fileEntry == null) throw new KeyNotFoundException($"File with {fileId} does not exist");
+
+        fileEntry.IsLocked = true;
+        fileEntry.LockedAt = DateTime.UtcNow;
+
+        await _dbContext.SaveChangesAsync();
     }
 
-    public Task<bool> MarkUploadComplete(string fileId, string? fileUrl)
+    public async Task MarkUploadComplete(string fileId, string? fileUrl)
     {
-        throw new NotImplementedException();
+        FileEntry? fileEntry = await FindFileEntryById(fileId);
+
+        if (fileEntry == null) throw new KeyNotFoundException($"File with {fileId} does not exist");
+
+        fileEntry.Status = FileEntryStatus.Completed;
+        fileEntry.FileUrl = fileUrl!;
+
+        await _dbContext.SaveChangesAsync();
     }
 
-    public Task UnlockFile(string fileId)
+    public async Task UnlockFile(string fileId)
     {
-        throw new NotImplementedException();
+        FileEntry? fileEntry = await FindFileEntryById(fileId);
+
+        if (fileEntry == null) throw new KeyNotFoundException($"File with {fileId} does not exist");
+
+        fileEntry.IsLocked = false;
+        fileEntry.LockedAt = null;
+
+        await _dbContext.SaveChangesAsync();
     }
 
-    public Task<FileEntry> UpdateFileEntry(string id, FileEntry fileEntry)
+    public async Task<FileEntry> UpdateFileEntry(string fileId, FileEntry fileEntry)
     {
-        throw new NotImplementedException();
+        FileEntry? existingFileEntry = await FindFileEntryById(fileId);
+
+        if (existingFileEntry == null) throw new KeyNotFoundException($"File with {fileId} does not exist");
+
+        _dbContext.Entry(existingFileEntry).CurrentValues.SetValues(fileEntry);
+
+        await _dbContext.SaveChangesAsync();
+
+        return existingFileEntry;
     }
 }
