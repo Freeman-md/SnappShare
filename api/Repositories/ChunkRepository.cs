@@ -24,7 +24,7 @@ public class ChunkRepository : IChunkRepository
         throw new NotImplementedException();
     }
 
-    public Task<Chunk> GetUploadedChunksByFileId(string fileId)
+    public Task<List<Chunk>> GetUploadedChunksByFileId(string fileId)
     {
         throw new NotImplementedException();
     }
