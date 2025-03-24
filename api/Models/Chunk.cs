@@ -16,9 +16,11 @@ public class Chunk {
     public FileEntry? FileEntry { get; set; }
 
     [Required]
+    [Range(0, int.MaxValue)]
     public int ChunkIndex { get; set; }
 
     [Required]
+    [Range(1, int.MaxValue)]
     public long ChunkSize { get; set; }
 
     [Required]
