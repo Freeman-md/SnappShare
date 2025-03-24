@@ -23,6 +23,7 @@ public class FileEntry {
     public required string FileExtension { get; set; }
 
     [Required]
+    [Range(0, int.MaxValue)]
     public int TotalChunks { get; set; }
 
     [NotMapped]
@@ -30,6 +31,7 @@ public class FileEntry {
 
     public long FileSize { get; set; }
 
+    [Required]
     [MaxLength(64)]
     public required string FileHash { get; set; } 
 

@@ -78,6 +78,12 @@ public class FileEntryBuilder
         return this;
     }
 
+    public FileEntryBuilder WithFileUrl(string fileUrl)
+    {
+        _fileEntry.FileUrl = fileUrl;
+        return this;
+    }
+
     public FileEntryBuilder WithStatus(FileEntryStatus status)
     {
         _fileEntry.Status = status;
