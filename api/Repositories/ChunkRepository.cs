@@ -2,6 +2,7 @@ using System;
 using api.Data;
 using api.Interfaces.Repositories;
 using api.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace api.Repositories;
 
@@ -14,23 +15,54 @@ public class ChunkRepository : IChunkRepository
         _dbContext = dbContext;
     }
 
-    public Task DeleteChunksByFileId(string fileId)
+    public async Task DeleteChunksByFileId(string fileId)
     {
-        throw new NotImplementedException();
+        if (string.IsNullOrWhiteSpace(fileId))
+            throw new ArgumentException($"File ID '{fileId}' is invalid.");
+
+        var chunksToDelete = await _dbContext.Chunks
+            .Where(c => c.FileId == fileId)
+            .ToListAsync();
+
+        if (chunksToDelete.Any())
+        {
+            _dbContext.Chunks.RemoveRange(chunksToDelete);
+            await _dbContext.SaveChangesAsync();
+        }
     }
 
-    public Task<Chunk> FindByFileIdAndChunkIndex(string fileId, int chunkIndex)
+    public async Task<Chunk?> FindChunkByFileIdAndChunkIndex(string fileId, int chunkIndex)
     {
-        throw new NotImplementedException();
+        if (string.IsNullOrWhiteSpace(fileId))
+            throw new ArgumentException($"File ID '{fileId}' is invalid.");
+
+        return await _dbContext.Chunks
+            .AsNoTracking()
+            .Include(c => c.FileEntry)
+            .Where(c => c.FileId == fileId && c.ChunkIndex == chunkIndex)
+            .FirstOrDefaultAsync();
     }
 
-    public Task<List<Chunk>> GetUploadedChunksByFileId(string fileId)
+
+    public async Task<List<Chunk>> GetUploadedChunksByFileId(string fileId)
     {
-        throw new NotImplementedException();
+        if (string.IsNullOrWhiteSpace(fileId))
+            throw new ArgumentException($"File ID '{fileId}' is invalid.");
+
+        IQueryable<Chunk> query = _dbContext.Chunks.AsNoTracking();
+
+        query = query.Where(chunk => chunk.FileId == fileId);
+
+        return await query.ToListAsync();
     }
 
-    public Task<Chunk> SaveChunk(Chunk chunk)
+    public async Task<Chunk> SaveChunk(Chunk chunk)
     {
-        throw new NotImplementedException();
+
+        _dbContext.Chunks.Add(chunk);
+
+        await _dbContext.SaveChangesAsync();
+
+        return chunk;
     }
 }

@@ -18,7 +18,6 @@ namespace api.tests.Builders
                 ChunkHash = Guid.NewGuid().ToString("N"),
                 ChunkUrl = "http://snappshare.com/chunk/0",
                 UploadedAt = DateTime.UtcNow,
-                FileEntry = new FileEntryBuilder().WithId(_chunk.FileId).Build()
             };
         }
 

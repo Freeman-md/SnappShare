@@ -52,7 +52,7 @@ public class ChunkRepositoryTests
     }
 
     [Fact]
-    public async Task FindByFileIdAndChunkIndex_ShouldReturnChunk_WhenExists()
+    public async Task FindChunkByFileIdAndChunkIndex_ShouldReturnChunk_WhenExists()
     {
         FileEntry fileEntry = new FileEntryBuilder().Build();
         Chunk chunk = new ChunkBuilder().WithFileEntry(fileEntry).Build();
@@ -61,26 +61,26 @@ public class ChunkRepositoryTests
         await _chunkRepository.SaveChunk(chunk);
 
 
-        Chunk? retrievedChunk = await _chunkRepository.FindByFileIdAndChunkIndex(fileEntry.Id, chunk.ChunkIndex);
+        Chunk? retrievedChunk = await _chunkRepository.FindChunkByFileIdAndChunkIndex(fileEntry.Id, chunk.ChunkIndex);
 
 
         Assert.NotNull(retrievedChunk);
-        Assert.True(retrievedChunk.PropertiesAreEqual(chunk));
-        Assert.True(retrievedChunk.FileEntry.PropertiesAreEqual(fileEntry));
+        Assert.True(retrievedChunk.PropertiesAreEqual(chunk, ["FileEntry"]));
+        Assert.True(retrievedChunk.FileEntry.PropertiesAreEqual(fileEntry, "Chunks"));
     }
 
     [Fact]
-    public async Task FindByFileIdAndChunkIndex_ShouldReturnNull_WhenChunkDoesNotExist()
+    public async Task FindChunkByFileIdAndChunkIndex_ShouldReturnNull_WhenChunkDoesNotExist()
     {
-        Chunk? chunk = await _chunkRepository.FindByFileIdAndChunkIndex(Guid.NewGuid().ToString(), new Random().Next());
+        Chunk? chunk = await _chunkRepository.FindChunkByFileIdAndChunkIndex(Guid.NewGuid().ToString(), new Random().Next());
 
         Assert.Null(chunk);
     }
 
     [Fact]
-    public async Task FindByFileIdAndChunkIndex_ShouldThrowException_WhenFileIdIsInvalid()
+    public async Task FindChunkByFileIdAndChunkIndex_ShouldThrowException_WhenFileIdIsInvalid()
     {
-        await Assert.ThrowsAsync<ArgumentException>(async () => await _chunkRepository.FindByFileIdAndChunkIndex(null!, new Random().Next()));
+        await Assert.ThrowsAsync<ArgumentException>(async () => await _chunkRepository.FindChunkByFileIdAndChunkIndex(null!, new Random().Next()));
     }
 
     [Fact]
@@ -88,15 +88,10 @@ public class ChunkRepositoryTests
     {
         FileEntry fileEntry = new FileEntryBuilder()
                                 .WithTotalChunks(3)
-                                .WithUploadedChunks(0)
+                                .WithUploadedChunks(3)
                                 .Build();
 
         await _fileEntryRepository.CreateFileEntry(fileEntry);
-
-        foreach (var chunk in fileEntry.Chunks)
-        {
-            await _chunkRepository.SaveChunk(chunk);
-        }
 
 
         List<Chunk> uploadedChunks = await _chunkRepository.GetUploadedChunksByFileId(fileEntry.Id);
@@ -142,12 +137,7 @@ public class ChunkRepositoryTests
                                 .Build();
 
         await _fileEntryRepository.CreateFileEntry(fileEntry);
-
-        foreach (var chunk in fileEntry.Chunks)
-        {
-            await _chunkRepository.SaveChunk(chunk);
-        }
-
+        
         
         await _chunkRepository.DeleteChunksByFileId(fileEntry.Id);
 

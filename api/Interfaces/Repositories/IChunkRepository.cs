@@ -3,7 +3,7 @@ using api.Models;
 namespace api.Interfaces.Repositories;
 
 public interface IChunkRepository {
-    public Task<Chunk> FindByFileIdAndChunkIndex(string fileId, int chunkIndex);
+    public Task<Chunk?> FindChunkByFileIdAndChunkIndex(string fileId, int chunkIndex);
 
     public Task<List<Chunk>> GetUploadedChunksByFileId(string fileId);
 

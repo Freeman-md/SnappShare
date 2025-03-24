@@ -13,7 +13,7 @@ public class Chunk {
     public required string FileId { get; set; }
 
     [ForeignKey("FileId")]
-    public required FileEntry FileEntry { get; set; }
+    public FileEntry? FileEntry { get; set; }
 
     [Required]
     public int ChunkIndex { get; set; }
