@@ -17,8 +17,7 @@ public class ChunkRepository : IChunkRepository
 
     public async Task DeleteChunksByFileId(string fileId)
     {
-        if (string.IsNullOrWhiteSpace(fileId))
-            throw new ArgumentException($"File ID '{fileId}' is invalid.");
+        ValidateFileId(fileId);
 
         var chunksToDelete = await _dbContext.Chunks
             .Where(c => c.FileId == fileId)
@@ -33,8 +32,7 @@ public class ChunkRepository : IChunkRepository
 
     public async Task<Chunk?> FindChunkByFileIdAndChunkIndex(string fileId, int chunkIndex)
     {
-        if (string.IsNullOrWhiteSpace(fileId))
-            throw new ArgumentException($"File ID '{fileId}' is invalid.");
+        ValidateFileId(fileId);
 
         return await _dbContext.Chunks
             .AsNoTracking()
@@ -46,8 +44,7 @@ public class ChunkRepository : IChunkRepository
 
     public async Task<List<Chunk>> GetUploadedChunksByFileId(string fileId)
     {
-        if (string.IsNullOrWhiteSpace(fileId))
-            throw new ArgumentException($"File ID '{fileId}' is invalid.");
+        ValidateFileId(fileId);
 
         IQueryable<Chunk> query = _dbContext.Chunks.AsNoTracking();
 
@@ -65,4 +62,11 @@ public class ChunkRepository : IChunkRepository
 
         return chunk;
     }
+
+    private static void ValidateFileId(string fileId)
+{
+    if (string.IsNullOrWhiteSpace(fileId))
+        throw new ArgumentException($"File ID '{fileId}' is invalid.");
+}
+
 }
