@@ -59,24 +59,4 @@ public class FileService : IFileService {
 
         return (file, expiryTime, isExpired);
     }
-
-    public Task<object> HandleFileUpload(string fileName, string fileHash, int chunkIndex, int totalChunks, IFormFile chunkFile, string chunkHash)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<object> CheckFileUploadStatus(string fileHash)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<object> UploadChunk(string fileId, int chunkIndex, IFormFile chunkFile, string chunkHash)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<object> FinalizeUpload(string fileId)
-    {
-        throw new NotImplementedException();
-    }
 }
