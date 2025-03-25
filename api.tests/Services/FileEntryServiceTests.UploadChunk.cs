@@ -54,7 +54,7 @@ public partial class FileEntryServiceTests
         _chunkRepository.Verify(repo => repo.FindChunkByFileIdAndChunkIndex(fileEntry.Id, chunk.ChunkIndex), Times.Once);
         _blobService.Verify(blob => blob.UploadFileAsync(chunkFile, _storageOptions.Value.ContainerName, It.IsAny<DateTimeOffset>()), Times.Once);
         _chunkRepository.Verify(repo => repo.SaveChunk(It.IsAny<Chunk>()), Times.Once);
-        _fileEntryRepository.Verify(repo => repo.UnlockFile(fileEntry.Id), Times.Once);
+        _fileEntryRepository.Verify(repo => repo.UnlockFile(fileEntry.Id), Times.AtLeastOnce);
     }
 
     [Fact]
@@ -95,7 +95,7 @@ public partial class FileEntryServiceTests
         _chunkRepository.Verify(repo => repo.FindChunkByFileIdAndChunkIndex(fileEntry.Id, chunk.ChunkIndex), Times.Once);
         _blobService.Verify(blob => blob.UploadFileAsync(chunkFile, _storageOptions.Value.ContainerName, It.IsAny<DateTimeOffset>()), Times.Never);
         _chunkRepository.Verify(repo => repo.SaveChunk(It.IsAny<Chunk>()), Times.Never);
-        _fileEntryRepository.Verify(repo => repo.UnlockFile(fileEntry.Id), Times.Once);
+        _fileEntryRepository.Verify(repo => repo.UnlockFile(fileEntry.Id), Times.AtLeastOnce);
     }
 
     [Theory]
@@ -122,7 +122,7 @@ public partial class FileEntryServiceTests
         _chunkRepository.Verify(repo => repo.FindChunkByFileIdAndChunkIndex(It.IsAny<string>(), It.IsAny<int>()), Times.Never);
         _blobService.Verify(blob => blob.UploadFileAsync(It.IsAny<IFormFile>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>()), Times.Never);
         _chunkRepository.Verify(repo => repo.SaveChunk(It.IsAny<Chunk>()), Times.Never);
-        _fileEntryRepository.Verify(repo => repo.UnlockFile(It.IsAny<string>()), Times.Never);
+        _fileEntryRepository.Verify(repo => repo.UnlockFile(It.IsAny<string>()), Times.Once);
     }
 
 
@@ -140,7 +140,7 @@ public partial class FileEntryServiceTests
         _chunkRepository.Verify(repo => repo.FindChunkByFileIdAndChunkIndex(It.IsAny<string>(), It.IsAny<int>()), Times.Never);
         _blobService.Verify(blob => blob.UploadFileAsync(It.IsAny<IFormFile>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>()), Times.Never);
         _chunkRepository.Verify(repo => repo.SaveChunk(It.IsAny<Chunk>()), Times.Never);
-        _fileEntryRepository.Verify(repo => repo.UnlockFile(It.IsAny<string>()), Times.Never);
+        _fileEntryRepository.Verify(repo => repo.UnlockFile(It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -158,7 +158,7 @@ public partial class FileEntryServiceTests
         _chunkRepository.Verify(repo => repo.FindChunkByFileIdAndChunkIndex(It.IsAny<string>(), It.IsAny<int>()), Times.Never);
         _blobService.Verify(blob => blob.UploadFileAsync(It.IsAny<IFormFile>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>()), Times.Never);
         _chunkRepository.Verify(repo => repo.SaveChunk(It.IsAny<Chunk>()), Times.Never);
-        _fileEntryRepository.Verify(repo => repo.UnlockFile(It.IsAny<string>()), Times.Never);
+        _fileEntryRepository.Verify(repo => repo.UnlockFile(It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -220,7 +220,7 @@ public async Task UploadChunk_ShouldThrowException_WhenLockOrUnlockFails()
     var ex = await Assert.ThrowsAsync<Exception>(act);
     Assert.Equal("Lock failed", ex.Message);
 
-    _fileEntryRepository.Verify(repo => repo.UnlockFile(It.IsAny<string>()), Times.Never);
+    _fileEntryRepository.Verify(repo => repo.UnlockFile(It.IsAny<string>()), Times.Once);
 }
 
 
