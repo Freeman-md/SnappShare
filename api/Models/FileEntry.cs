@@ -18,9 +18,8 @@ public class FileEntry {
     [MaxLength(255)]
     public required string FileName { get; set; }
 
-    [Required]
     [MaxLength(20)]
-    public required string FileExtension { get; set; }
+    public string? FileExtension { get; set; }
 
     [Required]
     [Range(0, int.MaxValue)]
@@ -35,9 +34,8 @@ public class FileEntry {
     [MaxLength(64)]
     public required string FileHash { get; set; } 
 
-    [Required]
     [MaxLength(500)]
-    public required string FileUrl { get; set; }
+    public string? FileUrl { get; set; }
 
     [Required]
     [EnumDataType(typeof(FileEntryStatus))]

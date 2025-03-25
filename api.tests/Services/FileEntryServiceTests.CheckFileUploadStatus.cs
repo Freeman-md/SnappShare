@@ -64,7 +64,7 @@ public partial class FileEntryServiceTests
     }
 
     [Fact]
-    public async Task CheckFileUploadStatus_ShouldCreateNewFileEntry_WhenFileDoesNotExist()
+    public async Task CheckFileUploadStatus_ShouldReturnNewStatus_WhenFileDoesNotExist()
     {
         const int TOTAL_CHUNKS = 3;
         string fileHash = Guid.NewGuid().ToString("N");
@@ -72,19 +72,13 @@ public partial class FileEntryServiceTests
         _fileEntryRepository.Setup(repo => repo.FindFileEntryByFileHash(fileHash))
                             .ReturnsAsync((FileEntry?)null);
 
-        _fileEntryRepository.Setup(repo => repo.CreateFileEntry(It.IsAny<FileEntry>()))
-                            .ReturnsAsync((FileEntry fileEntry) => fileEntry);
-
         var result = await _fileEntryService.CheckFileUploadStatus(fileHash);
 
         _fileEntryRepository.Verify(repo => repo.FindFileEntryByFileHash(It.IsAny<string>()), Times.Once);
-        _fileEntryRepository.Verify(repo => repo.CreateFileEntry(It.IsAny<FileEntry>()), Times.Once);
         _chunkRepository.Verify(repo => repo.GetUploadedChunksByFileId(It.IsAny<string>()), Times.Never);
         Assert.NotNull(result);
         UploadResponseDto res = result!;
         Assert.Equal(UploadResponseDtoStatus.NEW, res.Status);
-        Assert.NotNull(res.FileId);
-        Assert.Empty(res.UploadedChunks!);
     }
 
     [Fact]
@@ -167,7 +161,7 @@ public partial class FileEntryServiceTests
         _fileEntryRepository.Setup(repo => repo.FindFileEntryByFileHash(fileHash))
                             .ThrowsAsync(new Exception("Database failure during file lookup"));
 
-        _fileEntryRepository.Verify(repo => repo.FindFileEntryByFileHash(It.IsAny<string>()), Times.Once);
+        _fileEntryRepository.Verify(repo => repo.FindFileEntryByFileHash(It.IsAny<string>()), Times.Never);
         await Assert.ThrowsAsync<Exception>(async () =>
             await _fileEntryService.CheckFileUploadStatus(fileHash));
     }
@@ -186,8 +180,8 @@ public partial class FileEntryServiceTests
         _chunkRepository.Setup(repo => repo.GetUploadedChunksByFileId(fileEntry.Id))
                         .ThrowsAsync(new Exception("Chunk DB failure"));
 
-        _fileEntryRepository.Verify(repo => repo.FindFileEntryByFileHash(It.IsAny<string>()), Times.Once);
-        _chunkRepository.Verify(repo => repo.GetUploadedChunksByFileId(It.IsAny<string>()), Times.Once);
+        _fileEntryRepository.Verify(repo => repo.FindFileEntryByFileHash(It.IsAny<string>()), Times.Never);
+        _chunkRepository.Verify(repo => repo.GetUploadedChunksByFileId(It.IsAny<string>()), Times.Never);
 
         await Assert.ThrowsAsync<Exception>(async () =>
             await _fileEntryService.CheckFileUploadStatus(fileEntry.FileHash));

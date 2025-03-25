@@ -2,6 +2,7 @@ using System;
 using api.Configs;
 using api.Interfaces.Repositories;
 using api.Interfaces.Services;
+using api.Models;
 using api.Models.DTOs;
 using api.Tests.Interfaces.Services;
 using Microsoft.Extensions.Options;
@@ -32,9 +33,39 @@ public class FileEntryService : IFileEntryService
 
         BlobContainerName = storageOptions.Value.ContainerName;
     }
-    public Task<UploadResponseDto> CheckFileUploadStatus(string fileHash)
+    public async Task<UploadResponseDto> CheckFileUploadStatus(string fileHash)
     {
-        
+        if (string.IsNullOrWhiteSpace(fileHash))
+            throw new ArgumentException("File hash must be provided.");
+
+        FileEntry? fileEntry = await _fileEntryRepository.FindFileEntryByFileHash(fileHash);
+
+        if (fileEntry == null)
+        {
+            return new UploadResponseDto {
+                Status = UploadResponseDtoStatus.NEW
+            };
+        }
+
+        List<Chunk> uploadedChunks = await _chunkRepository.GetUploadedChunksByFileId(fileEntry.Id);
+        var uploadedIndexes = uploadedChunks.Select(c => c.ChunkIndex).ToList();
+
+        if (uploadedIndexes.Count == fileEntry.TotalChunks)
+        {
+            return new UploadResponseDto
+            {
+                Status = UploadResponseDtoStatus.COMPLETE,
+                FileId = fileEntry.Id,
+                FileUrl = fileEntry.FileUrl
+            };
+        }
+
+        return new UploadResponseDto
+        {
+            Status = UploadResponseDtoStatus.PARTIAL,
+            FileId = fileEntry.Id,
+            UploadedChunks = uploadedIndexes
+        };
     }
 
     public Task<UploadResponseDto> FinalizeUpload(string fileId)
@@ -42,7 +73,7 @@ public class FileEntryService : IFileEntryService
         throw new NotImplementedException();
     }
 
-    public Task<UploadResponseDto> HandleFileUpload(string fileName, string fileHash, int chunkIndex, int totalChunks, IFormFile chunkFile, string chunkHash)
+    public Task<UploadResponseDto> HandleFileUpload(string fileName, string fileHash, long fileSize, int chunkIndex, int totalChunks, IFormFile chunkFile, string chunkHash)
     {
         throw new NotImplementedException();
     }
@@ -50,5 +81,22 @@ public class FileEntryService : IFileEntryService
     public Task<UploadResponseDto> UploadChunk(string fileId, int chunkIndex, IFormFile chunkFile, string chunkHash)
     {
         throw new NotImplementedException();
+    }
+
+    private async Task<string> CreateFileEntry(string fileName, string fileHash, long fileSize, int totalChunks) {
+        // this should be responsible for generating the sas url for the file initially on the blob container so this will be a public method
+        // that will be tested accordingly
+        // each new file will have a new container which will store the chunks and the main file if needed. That Container will get the SAS
+        // for general access
+        var fileEntry = new FileEntry {
+            FileName = fileName,
+            FileHash = fileHash,
+            FileSize = fileSize,
+            TotalChunks = totalChunks
+        };
+
+        var createdFileEntry = await _fileEntryRepository.CreateFileEntry(fileEntry);
+
+        return createdFileEntry.Id;
     }
 }
