@@ -34,7 +34,7 @@ public class FileEntryService : IFileEntryService
     }
     public Task<UploadResponseDto> CheckFileUploadStatus(string fileHash)
     {
-        throw new NotImplementedException();
+        
     }
 
     public Task<UploadResponseDto> FinalizeUpload(string fileId)
