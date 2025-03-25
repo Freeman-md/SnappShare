@@ -66,7 +66,6 @@ public partial class FileEntryServiceTests
     [Fact]
     public async Task CheckFileUploadStatus_ShouldReturnNewStatus_WhenFileDoesNotExist()
     {
-        const int TOTAL_CHUNKS = 3;
         string fileHash = Guid.NewGuid().ToString("N");
 
         _fileEntryRepository.Setup(repo => repo.FindFileEntryByFileHash(fileHash))

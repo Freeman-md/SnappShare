@@ -45,8 +45,24 @@ public class FileEntryRepository : IFileEntryRepository
 
         if (fileEntry == null) throw new KeyNotFoundException($"File with {fileId} does not exist");
 
+        if (fileEntry.IsLocked) throw new InvalidOperationException("File is already locked.");
+
         fileEntry.IsLocked = true;
         fileEntry.LockedAt = DateTime.UtcNow;
+
+        await _dbContext.SaveChangesAsync();
+    }
+
+    public async Task UnlockFile(string fileId)
+    {
+        FileEntry? fileEntry = await FindFileEntryById(fileId);
+
+        if (fileEntry == null) throw new KeyNotFoundException($"File with {fileId} does not exist");
+
+        if (!fileEntry.IsLocked) throw new InvalidOperationException("File is not locked.");
+
+        fileEntry.IsLocked = false;
+        fileEntry.LockedAt = null;
 
         await _dbContext.SaveChangesAsync();
     }
@@ -59,18 +75,6 @@ public class FileEntryRepository : IFileEntryRepository
 
         fileEntry.Status = FileEntryStatus.Completed;
         fileEntry.FileUrl = fileUrl!;
-
-        await _dbContext.SaveChangesAsync();
-    }
-
-    public async Task UnlockFile(string fileId)
-    {
-        FileEntry? fileEntry = await FindFileEntryById(fileId);
-
-        if (fileEntry == null) throw new KeyNotFoundException($"File with {fileId} does not exist");
-
-        fileEntry.IsLocked = false;
-        fileEntry.LockedAt = null;
 
         await _dbContext.SaveChangesAsync();
     }

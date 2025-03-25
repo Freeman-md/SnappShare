@@ -139,9 +139,16 @@ public class FileEntryRepositoryTests
         await Assert.ThrowsAsync<KeyNotFoundException>(async () => await _fileEntryRepository.LockFile(Guid.NewGuid().ToString()));
     }
 
-    // TODO: LockFile_ShouldThrowError_WhenFileAlreadyLocked
-    // This test isn't necessary because the implementation first checks if the file is locked before attempting to lock or unlock it.
-    // As long as our tests for this and the service logic are correct, this scenario should rarely or not even occur.
+    [Fact]
+public async Task LockFile_ShouldThrowException_WhenFileAlreadyLocked()
+{
+    FileEntry fileEntry = new FileEntryBuilder().WithLockState(true, DateTime.UtcNow).Build();
+    await _fileEntryRepository.CreateFileEntry(fileEntry);
+
+    await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        _fileEntryRepository.LockFile(fileEntry.Id));
+}
+
 
 
     [Fact]
@@ -165,6 +172,17 @@ public class FileEntryRepositoryTests
     {
         await Assert.ThrowsAsync<KeyNotFoundException>(async () => await _fileEntryRepository.UnlockFile(Guid.NewGuid().ToString()));
     }
+
+    [Fact]
+public async Task UnlockFile_ShouldThrowException_WhenFileIsNotLocked()
+{
+    FileEntry fileEntry = new FileEntryBuilder().WithLockState(false).Build();
+    await _fileEntryRepository.CreateFileEntry(fileEntry);
+
+    await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        _fileEntryRepository.UnlockFile(fileEntry.Id));
+}
+
 
     [Fact]
     public async Task MarkUploadComplete_ShouldSetFileAsCompleted_AndStoreFileUrl()

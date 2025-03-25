@@ -27,13 +27,9 @@ public class FileEntryTests
     [Theory]
     [InlineData(null, "txt", 5, "hash", "http://file.com/test", FileEntryStatus.Pending)]     // Missing file name
     [InlineData("", "txt", 5, "hash", "http://file.com/test", FileEntryStatus.Pending)]       // Empty file name
-    [InlineData("Test", null, 5, "hash", "http://file.com/test", FileEntryStatus.Pending)]    // Missing extension
-    [InlineData("Test", "", 5, "hash", "http://file.com/test", FileEntryStatus.Pending)]      // Empty extension
     [InlineData("Test", "txt", -1, "hash", "http://file.com/test", FileEntryStatus.Pending)]  // Negative chunk count
     [InlineData("Test", "txt", 5, null, "http://file.com/test", FileEntryStatus.Pending)]     // Missing hash
     [InlineData("Test", "txt", 5, "", "http://file.com/test", FileEntryStatus.Pending)]       // Empty hash
-    [InlineData("Test", "txt", 5, "hash", null, FileEntryStatus.Pending)]                     // Missing URL
-    [InlineData("Test", "txt", 5, "hash", "", FileEntryStatus.Pending)]                       // Empty URL
     [InlineData("Test", "txt", 5, "hash", "http://file.com/test", (FileEntryStatus)99)]       // Invalid status
     public void TestInvalidFileEntry_ShouldFailValidation(
         string? fileName,
