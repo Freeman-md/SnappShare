@@ -2,6 +2,7 @@ using System;
 using api.Configs;
 using api.Interfaces.Repositories;
 using api.Interfaces.Services;
+using api.Models.DTOs;
 using api.Tests.Interfaces.Services;
 using Microsoft.Extensions.Options;
 
@@ -9,7 +10,7 @@ namespace api.Services;
 
 public class FileEntryService : IFileEntryService
 {
-     private ILogger<FileEntryService> _logger;
+    private ILogger<FileEntryService> _logger;
     private readonly IBlobService _blobService;
 
     private readonly IFileEntryRepository _fileEntryRepository;
@@ -22,7 +23,8 @@ public class FileEntryService : IFileEntryService
         IFileEntryRepository fileEntryRepository,
         IChunkRepository chunkRepository,
         IOptions<StorageOptions> storageOptions
-    ) {
+    )
+    {
         _logger = logger;
         _blobService = blobService;
         _fileEntryRepository = fileEntryRepository;
@@ -30,22 +32,22 @@ public class FileEntryService : IFileEntryService
 
         BlobContainerName = storageOptions.Value.ContainerName;
     }
-    public Task<object> CheckFileUploadStatus(string fileHash)
+    public Task<UploadResponseDto> CheckFileUploadStatus(string fileHash)
     {
         throw new NotImplementedException();
     }
 
-    public Task<object> FinalizeUpload(string fileId)
+    public Task<UploadResponseDto> FinalizeUpload(string fileId)
     {
         throw new NotImplementedException();
     }
 
-    public Task<object> HandleFileUpload(string fileName, string fileHash, int chunkIndex, int totalChunks, IFormFile chunkFile, string chunkHash)
+    public Task<UploadResponseDto> HandleFileUpload(string fileName, string fileHash, int chunkIndex, int totalChunks, IFormFile chunkFile, string chunkHash)
     {
         throw new NotImplementedException();
     }
 
-    public Task<object> UploadChunk(string fileId, int chunkIndex, IFormFile chunkFile, string chunkHash)
+    public Task<UploadResponseDto> UploadChunk(string fileId, int chunkIndex, IFormFile chunkFile, string chunkHash)
     {
         throw new NotImplementedException();
     }
