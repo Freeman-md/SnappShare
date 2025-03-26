@@ -97,7 +97,7 @@ namespace api.tests.Services
         [Fact]
         public async Task GetFile_ShouldThrowKeyNotFoundException_WhenFileDoesNotExist()
         {
-            _mockFileRepository.Setup(x => x.GetFile("NON_EXISTENT")).ReturnsAsync((FileUpload)null);
+            _mockFileRepository.Setup(x => x.GetFile("NON_EXISTENT")).ReturnsAsync((FileUpload)null!);
             await Assert.ThrowsAsync<KeyNotFoundException>(async () => await _fileService.GetFile("NON_EXISTENT"));
         }
     }

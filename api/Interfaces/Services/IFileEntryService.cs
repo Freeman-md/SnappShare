@@ -12,4 +12,5 @@ public interface IFileEntryService {
     public Task<UploadResponseDto> UploadChunk(string fileId, int chunkIndex, IFormFile chunkFile, string chunkHash);
 
     public Task<UploadResponseDto> FinalizeUpload(string fileId);
+    public Task<FileEntry> CreateFileEntry(string fileName, string fileHash, long fileSize, int totalChunks);
 }

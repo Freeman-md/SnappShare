@@ -140,22 +140,33 @@ public class FileEntryService : IFileEntryService
         }
     }
 
-    private async Task<string> CreateFileEntry(string fileName, string fileHash, long fileSize, int totalChunks)
+    public async Task<FileEntry> CreateFileEntry(string fileName, string fileHash, long fileSize, int totalChunks)
     {
-        // this should be responsible for generating the sas url for the file initially on the blob container so this will be a public method
-        // that will be tested accordingly
-        // each new file will have a new container which will store the chunks and the main file if needed. That Container will get the SAS
-        // for general access
+        if (string.IsNullOrWhiteSpace(fileName))
+            throw new ArgumentException("File Name must be provided.", nameof(fileName));
+
+        if (string.IsNullOrWhiteSpace(fileHash))
+            throw new ArgumentException("File Hash must be provided.", nameof(fileHash));
+
+        if (totalChunks <= 0)
+            throw new ArgumentException("Total Chunks must be greater than zero.", nameof(totalChunks));
+
+        if (fileSize <= 0)
+            throw new ArgumentException("File Size must be greater than zero.", nameof(fileSize));
+
+        string fileUrl = await _blobService.GenerateSasTokenAsync(fileName, BlobContainerName, default!);
+
         var fileEntry = new FileEntry
         {
             FileName = fileName,
             FileHash = fileHash,
             FileSize = fileSize,
-            TotalChunks = totalChunks
+            TotalChunks = totalChunks,
+            FileUrl = fileUrl,
         };
 
         var createdFileEntry = await _fileEntryRepository.CreateFileEntry(fileEntry);
 
-        return createdFileEntry.Id;
+        return createdFileEntry;
     }
 }
