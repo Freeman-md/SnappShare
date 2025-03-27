@@ -6,6 +6,7 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Sas;
 using Microsoft.AspNetCore.Http;
+using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Threading.Tasks;
 
@@ -71,5 +72,25 @@ public class BlobService : IBlobService
         string sasToken = sasBuilder.ToSasQueryParameters(delegationKey, _blobServiceClient.AccountName).ToString();
 
         return $"{blobClient.Uri}?{sasToken}";
+    }
+
+    public Task<string> UploadChunkBlock(IFormFile file, string blobName, string containerName, string blockId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<string> CommitBlockListAsync(string blobName, string containerName, IEnumerable<string> blockIds)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<bool> BlockExistsAsync(string blobName, string containerName, string blockId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<List<string>> GetUncomittedBlockIdsAsync(string blobName, string containerName)
+    {
+        throw new NotImplementedException();
     }
 }
