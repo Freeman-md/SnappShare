@@ -28,7 +28,7 @@ public partial class FileEntryServiceTests
         _chunkRepository.Setup(repo => repo.FindChunkByFileIdAndChunkIndex(fileEntry.Id, chunk.ChunkIndex))
                         .ReturnsAsync((Chunk)null!);
 
-        _blobService.Setup(x => x.UploadFileAsync(chunkFile, _storageOptions.Value.ContainerName, It.IsAny<DateTimeOffset>()))
+        _blobService.Setup(x => x.UploadFileAsync(chunkFile, It.IsAny<string>(), _storageOptions.Value.ContainerName, It.IsAny<DateTimeOffset>()))
                         .ReturnsAsync(("someUrl", chunk.ChunkHash));
 
         _chunkRepository.Setup(repo => repo.SaveChunk(It.IsAny<Chunk>()))
@@ -52,7 +52,7 @@ public partial class FileEntryServiceTests
 
         _fileEntryRepository.Verify(repo => repo.LockFile(fileEntry.Id), Times.Once);
         _chunkRepository.Verify(repo => repo.FindChunkByFileIdAndChunkIndex(fileEntry.Id, chunk.ChunkIndex), Times.Once);
-        _blobService.Verify(blob => blob.UploadFileAsync(chunkFile, _storageOptions.Value.ContainerName, It.IsAny<DateTimeOffset>()), Times.Once);
+        _blobService.Verify(blob => blob.UploadFileAsync(chunkFile, It.IsAny<string>(), _storageOptions.Value.ContainerName, It.IsAny<DateTimeOffset>()), Times.Once);
         _chunkRepository.Verify(repo => repo.SaveChunk(It.IsAny<Chunk>()), Times.Once);
         _fileEntryRepository.Verify(repo => repo.UnlockFile(fileEntry.Id), Times.AtLeastOnce);
     }
@@ -171,7 +171,7 @@ public partial class FileEntryServiceTests
 
         _fileEntryRepository.Setup(repo => repo.FindFileEntryById(fileEntry.Id)).ReturnsAsync(fileEntry);
         _chunkRepository.Setup(repo => repo.FindChunkByFileIdAndChunkIndex(fileEntry.Id, chunk.ChunkIndex)).ReturnsAsync((Chunk?)null);
-        _blobService.Setup(blob => blob.UploadFileAsync(It.IsAny<IFormFile>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>()))
+        _blobService.Setup(blob => blob.UploadFileAsync(It.IsAny<IFormFile>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>()))
             .ThrowsAsync(new Exception("Blob upload failed"));
 
         var act = async () => await _fileEntryService.UploadChunk(fileEntry.Id, chunk.ChunkIndex, chunkFile, chunk.ChunkHash);

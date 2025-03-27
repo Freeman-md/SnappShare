@@ -21,12 +21,17 @@ public class BlobService : IBlobService
 
     public async Task<(string fileUrl, string fileName)> UploadFileAsync(IFormFile file, string containerName, DateTimeOffset expiryTime)
     {
+        string uniqueFileName = $"{Path.GetFileNameWithoutExtension(file.FileName)}-{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+
+        return await UploadFileAsync(file, uniqueFileName, containerName, expiryTime);
+    }
+
+    public async Task<(string fileUrl, string fileName)> UploadFileAsync(IFormFile file, string fileName, string containerName, DateTimeOffset expiryTime)
+    {
         var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
         await containerClient.CreateIfNotExistsAsync(PublicAccessType.None);
 
-        string uniqueFileName = $"{Path.GetFileNameWithoutExtension(file.FileName)}-{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
-
-        var blobClient = containerClient.GetBlobClient(uniqueFileName);
+        var blobClient = containerClient.GetBlobClient(fileName);
 
         using var stream = file.OpenReadStream();
         await blobClient.UploadAsync(stream);
@@ -37,7 +42,7 @@ public class BlobService : IBlobService
             };
         await blobClient.SetMetadataAsync(metadata);
 
-        return (blobClient.Uri.ToString(), uniqueFileName);
+        return (blobClient.Uri.ToString(), fileName);
     }
 
     public async Task<string> GenerateSasTokenAsync(string blobName, string containerName, DateTimeOffset expirtyTime)

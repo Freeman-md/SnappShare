@@ -111,7 +111,9 @@ public class FileEntryService : IFileEntryService
                 };
             }
 
-            (string chunkUrl, string chunkName) = await _blobService.UploadFileAsync(chunkFile, BlobContainerName, default!); // we use default expiry time for now. This has to be set though and passed into the uploadchunk method
+            string chunkFileName = $"{Path.GetFileNameWithoutExtension(chunkHash)}-{Guid.NewGuid()}{Path.GetExtension(chunkFile.FileName)}";
+
+            (string chunkUrl, string chunkName) = await _blobService.UploadFileAsync(chunkFile, chunkFileName, BlobContainerName, default!); // we use default expiry time for now. This has to be set though and passed into the uploadchunk method
 
             Chunk chunk = new Chunk
             {
