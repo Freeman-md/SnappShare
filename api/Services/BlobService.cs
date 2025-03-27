@@ -74,7 +74,7 @@ public class BlobService : IBlobService
         return $"{blobClient.Uri}?{sasToken}";
     }
 
-    public Task<string> UploadChunkBlock(IFormFile file, string blobName, string containerName, string blockId)
+    public Task<string> UploadChunkBlockAsync(IFormFile file, string blobName, string containerName, string blockId)
     {
         throw new NotImplementedException();
     }
