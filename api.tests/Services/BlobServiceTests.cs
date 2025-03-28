@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Moq;
 using Xunit;
 using api.Services;
+using Azure.Storage.Blobs.Specialized;
 
 namespace api.tests.Services
 {
@@ -19,6 +20,7 @@ namespace api.tests.Services
         private readonly Mock<BlobServiceClient> _mockBlobServiceClient;
         private readonly Mock<BlobContainerClient> _mockContainerClient;
         private readonly Mock<BlobClient> _mockBlobClient;
+        private readonly Mock<BlockBlobClient> _mockBlockBlobClient;
         private readonly BlobService _blobService;
         private const string ContainerName = "test-container";
 
@@ -27,6 +29,7 @@ namespace api.tests.Services
             _mockBlobServiceClient = new Mock<BlobServiceClient>();
             _mockContainerClient = new Mock<BlobContainerClient>();
             _mockBlobClient = new Mock<BlobClient>();
+            _mockBlockBlobClient = new Mock<BlockBlobClient>();
 
             _mockBlobServiceClient
                 .Setup(x => x.GetBlobContainerClient(ContainerName))
@@ -35,6 +38,13 @@ namespace api.tests.Services
             _mockContainerClient
                 .Setup(x => x.GetBlobClient(It.IsAny<string>()))
                 .Returns(_mockBlobClient.Object);
+
+            _mockContainerClient
+                .Setup(x => x.CreateIfNotExistsAsync(PublicAccessType.None, null, null, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Mock.Of<Azure.Response<BlobContainerInfo>>());
+
+                _mockContainerClient.Setup(client => client.GetBlockBlobClient(It.IsAny<string>()))
+                            .Returns(_mockBlockBlobClient.Object);
 
             _blobService = new BlobService(_mockBlobServiceClient.Object);
         }
@@ -46,10 +56,6 @@ namespace api.tests.Services
             var expiryTime = DateTimeOffset.UtcNow.AddMinutes(30);
             var fileStream = new MemoryStream(new byte[1024]);
             var formFile = new FormFile(fileStream, 0, fileStream.Length, "file", fileName);
-
-            _mockContainerClient
-                .Setup(x => x.CreateIfNotExistsAsync(PublicAccessType.None, null, null, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(Mock.Of<Azure.Response<BlobContainerInfo>>());
 
             _mockBlobClient
                 .Setup(x => x.UploadAsync(It.IsAny<Stream>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))

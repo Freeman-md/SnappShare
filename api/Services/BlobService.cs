@@ -4,6 +4,7 @@ namespace api.Services;
 
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Azure.Storage.Blobs.Specialized;
 using Azure.Storage.Sas;
 using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
@@ -89,7 +90,7 @@ public class BlobService : IBlobService
         throw new NotImplementedException();
     }
 
-    public Task<List<string>> GetUncomittedBlockIdsAsync(string blobName, string containerName)
+    public Task<List<string>> GetUncommittedBlockIdsAsync(string blobName, string containerName)
     {
         throw new NotImplementedException();
     }
