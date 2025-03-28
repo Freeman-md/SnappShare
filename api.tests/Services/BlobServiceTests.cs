@@ -14,7 +14,7 @@ using api.Services;
 
 namespace api.tests.Services
 {
-    public class BlobServiceTests
+    public partial class BlobServiceTests
     {
         private readonly Mock<BlobServiceClient> _mockBlobServiceClient;
         private readonly Mock<BlobContainerClient> _mockContainerClient;

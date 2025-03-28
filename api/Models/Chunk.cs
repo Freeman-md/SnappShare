@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace api.Models;
 
@@ -18,6 +19,9 @@ public class Chunk {
     [Required]
     [Range(0, int.MaxValue)]
     public int ChunkIndex { get; set; }
+
+    [NotMapped]
+    public string BlockId => Convert.ToBase64String(Encoding.UTF8.GetBytes(ChunkIndex.ToString("D6")));
 
     [Required]
     [Range(1, int.MaxValue)]

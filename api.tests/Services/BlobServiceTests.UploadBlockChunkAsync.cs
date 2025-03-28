@@ -1,0 +1,123 @@
+using System;
+using api.Models;
+using api.tests.Builders;
+using Azure.Storage.Blobs.Models;
+using Azure.Storage.Blobs.Specialized;
+using Microsoft.AspNetCore.Http;
+using Moq;
+
+namespace api.tests.Services;
+
+public partial class BlobServiceTests
+{
+    [Fact]
+    public async Task UploadChunkBlockAsync_ShouldUploadChunkBlockSuccessfully()
+    {
+        Mock<BlockBlobClient> _mockBlockBlobClient = new Mock<BlockBlobClient>();
+        FileEntry fileEntry = new FileEntryBuilder().Build();
+        Chunk chunk = new ChunkBuilder().Build();
+        using var stream = new MemoryStream();
+        IFormFile chunkFile = new FormFile(stream, 0, stream.Length, chunk.ChunkHash, fileEntry.FileName);
+
+        _mockContainerClient.Setup(client => client.CreateIfNotExistsAsync(PublicAccessType.None, null, null, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Mock.Of<Azure.Response<BlobContainerInfo>>());
+
+        _mockContainerClient.Setup(client => client.GetBlockBlobClient(It.IsAny<string>()))
+                            .Returns(_mockBlockBlobClient.Object);
+
+        _mockBlockBlobClient.Setup(client => client.StageBlockAsync(It.IsAny<string>(), It.IsAny<Stream>(), null, default))
+                            .ReturnsAsync(Mock.Of<Azure.Response<BlockInfo>>());
+
+        await _blobService.UploadChunkBlockAsync(chunkFile, fileEntry.FileName, ContainerName, chunk.BlockId);
+
+        _mockContainerClient.Verify(client => client.CreateIfNotExistsAsync(It.IsAny<PublicAccessType>(), null, null, It.IsAny<CancellationToken>()), Times.Once);
+        _mockContainerClient.Verify(client => client.GetBlockBlobClient(It.IsAny<string>()), Times.Once);
+        _mockBlockBlobClient.Verify(client => client.StageBlockAsync(It.IsAny<string>(), It.IsAny<Stream>(), null, default), Times.Once);
+    }
+
+    [Fact]
+    public async Task UploadChunkBlockAsync_ShouldThrowException_WhenContainerNotFound()
+    {
+        Mock<BlockBlobClient> _mockBlockBlobClient = new Mock<BlockBlobClient>();
+
+        _mockContainerClient.Setup(client => client.CreateIfNotExistsAsync(PublicAccessType.None, null, null, It.IsAny<CancellationToken>()))
+                    .ThrowsAsync(new Exception("Container not found"));
+
+        await Assert.ThrowsAnyAsync<Exception>(
+            async () => await _blobService.UploadChunkBlockAsync(It.IsAny<IFormFile>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()
+            ));
+
+        _mockContainerClient.Verify(client => client.CreateIfNotExistsAsync(It.IsAny<PublicAccessType>(), null, null, It.IsAny<CancellationToken>()), Times.Never);
+        _mockContainerClient.Verify(client => client.GetBlockBlobClient(It.IsAny<string>()), Times.Never);
+        _mockBlockBlobClient.Verify(client => client.StageBlockAsync(It.IsAny<string>(), It.IsAny<Stream>(), null, default), Times.Never);
+    }
+
+    [Fact]
+    public async Task UploadChunkBlockAsync_ShouldThrowException_WhenBlobNotFound()
+    {
+        Mock<BlockBlobClient> _mockBlockBlobClient = new Mock<BlockBlobClient>();
+
+        _mockContainerClient.Setup(client => client.CreateIfNotExistsAsync(PublicAccessType.None, null, null, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Mock.Of<Azure.Response<BlobContainerInfo>>());
+
+        _mockContainerClient.Setup(client => client.GetBlockBlobClient(It.IsAny<string>()))
+                            .Returns(_mockBlockBlobClient.Object);
+
+        _mockBlockBlobClient.Setup(client => client.StageBlockAsync(It.IsAny<string>(), It.IsAny<Stream>(), null, default))
+        .ThrowsAsync(new Exception("Block blob upload failed"));
+
+        await Assert.ThrowsAnyAsync<Exception>(
+            async () => await _blobService.UploadChunkBlockAsync(It.IsAny<IFormFile>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()
+            ));
+
+        _mockContainerClient.Verify(client => client.CreateIfNotExistsAsync(It.IsAny<PublicAccessType>(), null, null, It.IsAny<CancellationToken>()), Times.Once);
+        _mockContainerClient.Verify(client => client.GetBlockBlobClient(It.IsAny<string>()), Times.Once);
+        _mockBlockBlobClient.Verify(client => client.StageBlockAsync(It.IsAny<string>(), It.IsAny<Stream>(), null, default), Times.Never);
+    }
+
+    [Fact]
+    public async Task UploadChunkBlockAsync_ShouldFail_IfUploadStreamFails()
+    {
+        Mock<BlockBlobClient> _mockBlockBlobClient = new Mock<BlockBlobClient>();
+
+        _mockContainerClient.Setup(client => client.CreateIfNotExistsAsync(PublicAccessType.None, null, null, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Mock.Of<Azure.Response<BlobContainerInfo>>());
+
+        _mockContainerClient.Setup(client => client.GetBlockBlobClient(It.IsAny<string>()))
+                            .Throws(new Exception("Block blob not found"));
+
+        await Assert.ThrowsAnyAsync<Exception>(
+            async () => await _blobService.UploadChunkBlockAsync(It.IsAny<IFormFile>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()
+            ));
+
+        _mockContainerClient.Verify(client => client.CreateIfNotExistsAsync(It.IsAny<PublicAccessType>(), null, null, It.IsAny<CancellationToken>()), Times.Once);
+        _mockContainerClient.Verify(client => client.GetBlockBlobClient(It.IsAny<string>()), Times.Never);
+        _mockBlockBlobClient.Verify(client => client.StageBlockAsync(It.IsAny<string>(), It.IsAny<Stream>(), null, default), Times.Never);
+    }
+
+    [Theory]
+    [InlineData("", "container-name", "block-id")]
+    [InlineData("  ", "container-name", "block-id")]
+    [InlineData(null, "container-name", "block-id")]
+    [InlineData("blob-name", "", "block-id")]
+    [InlineData("blob-name", " ", "block-id")]
+    [InlineData("blob-name", null, "block-id")]
+    [InlineData("blob-name", "container-name", "")]
+    [InlineData("blob-name", "container-name", " ")]
+    [InlineData("blob-name", "container-name", null)]
+    public async Task UploadChunkBlockAsync_ShouldThrowArgumentException_OnInvalidInputs(string blobName, string containerName, string blockId) {
+        await Assert.ThrowsAsync<ArgumentException>(
+            async () => await _blobService.UploadChunkBlockAsync(It.IsAny<IFormFile>(), blobName, containerName, blockId));
+    }
+
+    [Fact]
+    public async Task UploadChunkBlockAsync_ShouldThrowArgumentException_OnInvalidFile() {
+        FileEntry fileEntry = new FileEntryBuilder().Build();
+        Chunk chunk = new ChunkBuilder().Build();
+        using var stream = new MemoryStream();
+        IFormFile chunkFile = new FormFile(stream, 0, stream.Length, chunk.ChunkHash, fileEntry.FileName);
+
+        await Assert.ThrowsAsync<ArgumentException>(
+            async () => await _blobService.UploadChunkBlockAsync(chunkFile, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()));
+    }
+}
