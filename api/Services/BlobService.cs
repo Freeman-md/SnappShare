@@ -75,7 +75,7 @@ public class BlobService : IBlobService
         return $"{blobClient.Uri}?{sasToken}";
     }
 
-    public async Task<string> UploadChunkBlockAsync(IFormFile file, string blobName, string containerName, string blockId)
+    public async Task UploadChunkBlockAsync(IFormFile file, string blobName, string containerName, string blockId)
     {
         if (string.IsNullOrWhiteSpace(blobName))
             throw new ArgumentException("Blob name must be provided.", nameof(blobName));
@@ -96,13 +96,26 @@ public class BlobService : IBlobService
 
         using var stream = file.OpenReadStream();
         await blockBlobClient.StageBlockAsync(blockId, stream);
-
-        return blockId;
     }
 
-    public Task<string> CommitBlockListAsync(string blobName, string containerName, IEnumerable<string> blockIds)
+    public async Task CommitBlockListAsync(string blobName, string containerName, IEnumerable<string> blockIds)
     {
-        throw new NotImplementedException();
+        if (string.IsNullOrWhiteSpace(blobName))
+            throw new ArgumentException("Blob name must be provided.", nameof(blobName));
+
+        if (string.IsNullOrWhiteSpace(containerName))
+            throw new ArgumentException("Container name must be provided.", nameof(containerName));
+
+        if (!blockIds.Any()) {
+            throw new ArgumentException("Block IDs must be provided.", nameof(blockIds));
+        }
+
+        BlobContainerClient containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+        await containerClient.CreateIfNotExistsAsync();
+
+        BlockBlobClient blockBlobClient = GetBlockBlobClient(containerClient, blobName);
+
+        await blockBlobClient.CommitBlockListAsync(blockIds);
     }
 
     public Task<bool> BlockExistsAsync(string blobName, string containerName, string blockId)

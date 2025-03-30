@@ -7,8 +7,8 @@ public interface IBlobService {
 
     Task<string> GenerateSasTokenAsync(string blobName, string containerName, DateTimeOffset expiryTime);
 
-    Task<string> UploadChunkBlockAsync(IFormFile file, string blobName, string containerName, string blockId);
-    Task<string> CommitBlockListAsync(string blobName, string containerName, IEnumerable<string> blockIds);
+    Task UploadChunkBlockAsync(IFormFile file, string blobName, string containerName, string blockId);
+    Task CommitBlockListAsync(string blobName, string containerName, IEnumerable<string> blockIds);
     Task<bool> BlockExistsAsync(string blobName, string containerName, string blockId);
     Task<List<string>> GetUncommittedBlockIdsAsync(string blobName, string containerName);
 }
