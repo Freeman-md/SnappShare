@@ -77,7 +77,19 @@ public class BlobService : IBlobService
 
     public Task<string> UploadChunkBlockAsync(IFormFile file, string blobName, string containerName, string blockId)
     {
-        throw new NotImplementedException();
+        if (string.IsNullOrWhiteSpace(blobName))
+            throw new ArgumentException("Blob name must be provided.", nameof(blobName));
+
+        if (string.IsNullOrWhiteSpace(containerName))
+            throw new ArgumentException("Container name must be provided.", nameof(containerName));
+
+        if (string.IsNullOrWhiteSpace(blockId))
+            throw new ArgumentException("Block ID must be provided.", nameof(blockId));
+
+        if (file == null || file.Length <= 0)
+            throw new ArgumentException("File must not be empty.", nameof(file));
+
+            throw new NotImplementedException();
     }
 
     public Task<string> CommitBlockListAsync(string blobName, string containerName, IEnumerable<string> blockIds)
