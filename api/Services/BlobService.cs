@@ -106,21 +106,47 @@ public class BlobService : IBlobService
         if (string.IsNullOrWhiteSpace(containerName))
             throw new ArgumentException("Container name must be provided.", nameof(containerName));
 
-        if (!blockIds.Any()) {
+        if (!blockIds.Any())
+        {
             throw new ArgumentException("Block IDs must be provided.", nameof(blockIds));
         }
 
         BlobContainerClient containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
-        await containerClient.CreateIfNotExistsAsync();
+
+        if (!await containerClient.ExistsAsync())
+        {
+            throw new InvalidOperationException("Container does not exist");
+        }
 
         BlockBlobClient blockBlobClient = GetBlockBlobClient(containerClient, blobName);
 
         await blockBlobClient.CommitBlockListAsync(blockIds);
     }
 
-    public Task<bool> BlockExistsAsync(string blobName, string containerName, string blockId)
+    public async Task<bool> BlockExistsAsync(string blobName, string containerName, string blockId)
     {
-        throw new NotImplementedException();
+        if (string.IsNullOrWhiteSpace(blobName))
+            throw new ArgumentException("Blob name must be provided.", nameof(blobName));
+
+        if (string.IsNullOrWhiteSpace(containerName))
+            throw new ArgumentException("Container name must be provided.", nameof(containerName));
+
+        if (string.IsNullOrWhiteSpace(blockId))
+            throw new ArgumentException("Block ID must be provided.", nameof(blockId));
+
+        BlobContainerClient containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+
+        if (!await containerClient.ExistsAsync())
+        {
+            throw new InvalidOperationException("Container does not exist");
+        }
+
+        BlockBlobClient blockBlobClient = GetBlockBlobClient(containerClient, blobName);
+
+        var response = await blockBlobClient.GetBlockListAsync(BlockListTypes.Uncommitted);
+        var uncommittedBlocks = response.Value.UncommittedBlocks;
+
+        return uncommittedBlocks.Any(block => block.Name == blockId);
     }
 
     public Task<List<string>> GetUncommittedBlockIdsAsync(string blobName, string containerName)

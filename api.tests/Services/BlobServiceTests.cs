@@ -44,6 +44,10 @@ namespace api.tests.Services
                 .Setup(x => x.CreateIfNotExistsAsync(PublicAccessType.None, null, null, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(Mock.Of<Azure.Response<BlobContainerInfo>>());
 
+            _mockContainerClient
+                .Setup(x => x.ExistsAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Response.FromValue(true, Mock.Of<Response>()));
+
 
             _blobService = new TestableBlobService(_mockBlobServiceClient.Object, _mockBlockBlobClient.Object);
         }
