@@ -75,7 +75,7 @@ public class BlobService : IBlobService
         return $"{blobClient.Uri}?{sasToken}";
     }
 
-    public Task<string> UploadChunkBlockAsync(IFormFile file, string blobName, string containerName, string blockId)
+    public async Task<string> UploadChunkBlockAsync(IFormFile file, string blobName, string containerName, string blockId)
     {
         if (string.IsNullOrWhiteSpace(blobName))
             throw new ArgumentException("Blob name must be provided.", nameof(blobName));
@@ -89,7 +89,15 @@ public class BlobService : IBlobService
         if (file == null || file.Length <= 0)
             throw new ArgumentException("File must not be empty.", nameof(file));
 
-            throw new NotImplementedException();
+        BlobContainerClient containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+        await containerClient.CreateIfNotExistsAsync();
+
+        BlockBlobClient blockBlobClient = GetBlockBlobClient(containerClient, blobName);
+
+        using var stream = file.OpenReadStream();
+        await blockBlobClient.StageBlockAsync(blockId, stream);
+
+        return blockId;
     }
 
     public Task<string> CommitBlockListAsync(string blobName, string containerName, IEnumerable<string> blockIds)

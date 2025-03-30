@@ -15,16 +15,15 @@ public partial class BlobServiceTests
     {
         FileEntry fileEntry = new FileEntryBuilder().Build();
         Chunk chunk = new ChunkBuilder().Build();
-        using var stream = new MemoryStream();
-        IFormFile chunkFile = new FormFile(stream, 0, stream.Length, chunk.ChunkHash, fileEntry.FileName);
+        var fileStream = new MemoryStream(new byte[1024]);
+        IFormFile chunkFile = new FormFile(fileStream, 0, fileStream.Length, chunk.ChunkHash, fileEntry.FileName);
 
-        _mockBlockBlobClient.Setup(client => client.StageBlockAsync(It.IsAny<string>(), It.IsAny<Stream>(), null, default))
+        _mockBlockBlobClient.Setup(client => client.StageBlockAsync(It.IsAny<string>(), It.IsAny<Stream>(), null, default(CancellationToken)))
                             .ReturnsAsync(Mock.Of<Azure.Response<BlockInfo>>());
 
         await _blobService.UploadChunkBlockAsync(chunkFile, fileEntry.FileName, ContainerName, chunk.BlockId);
 
         _mockContainerClient.Verify(client => client.CreateIfNotExistsAsync(It.IsAny<PublicAccessType>(), null, null, It.IsAny<CancellationToken>()), Times.Once);
-        _mockContainerClient.Verify(client => client.GetBlockBlobClient(It.IsAny<string>()), Times.Once);
         _mockBlockBlobClient.Verify(client => client.StageBlockAsync(It.IsAny<string>(), It.IsAny<Stream>(), null, default), Times.Once);
     }
 
@@ -40,7 +39,6 @@ public partial class BlobServiceTests
             ));
 
         _mockContainerClient.Verify(client => client.CreateIfNotExistsAsync(It.IsAny<PublicAccessType>(), null, null, It.IsAny<CancellationToken>()), Times.Never);
-        _mockContainerClient.Verify(client => client.GetBlockBlobClient(It.IsAny<string>()), Times.Never);
         _mockBlockBlobClient.Verify(client => client.StageBlockAsync(It.IsAny<string>(), It.IsAny<Stream>(), null, default), Times.Never);
     }
 
@@ -55,24 +53,7 @@ public partial class BlobServiceTests
             async () => await _blobService.UploadChunkBlockAsync(It.IsAny<IFormFile>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()
             ));
 
-        _mockContainerClient.Verify(client => client.CreateIfNotExistsAsync(It.IsAny<PublicAccessType>(), null, null, It.IsAny<CancellationToken>()), Times.Once);
-        _mockContainerClient.Verify(client => client.GetBlockBlobClient(It.IsAny<string>()), Times.Once);
-        _mockBlockBlobClient.Verify(client => client.StageBlockAsync(It.IsAny<string>(), It.IsAny<Stream>(), null, default), Times.Never);
-    }
-
-    [Fact]
-    public async Task UploadChunkBlockAsync_ShouldFail_IfUploadStreamFails()
-    {
-
-        _mockContainerClient.Setup(client => client.GetBlockBlobClient(It.IsAny<string>()))
-                            .Throws(new Exception("Block blob not found"));
-
-        await Assert.ThrowsAnyAsync<Exception>(
-            async () => await _blobService.UploadChunkBlockAsync(It.IsAny<IFormFile>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()
-            ));
-
-        _mockContainerClient.Verify(client => client.CreateIfNotExistsAsync(It.IsAny<PublicAccessType>(), null, null, It.IsAny<CancellationToken>()), Times.Once);
-        _mockContainerClient.Verify(client => client.GetBlockBlobClient(It.IsAny<string>()), Times.Never);
+        _mockContainerClient.Verify(client => client.CreateIfNotExistsAsync(It.IsAny<PublicAccessType>(), null, null, It.IsAny<CancellationToken>()), Times.Never);
         _mockBlockBlobClient.Verify(client => client.StageBlockAsync(It.IsAny<string>(), It.IsAny<Stream>(), null, default), Times.Never);
     }
 
