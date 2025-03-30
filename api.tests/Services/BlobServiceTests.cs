@@ -12,6 +12,7 @@ using Moq;
 using Xunit;
 using api.Services;
 using Azure.Storage.Blobs.Specialized;
+using api.tests.Classes;
 
 namespace api.tests.Services
 {
@@ -43,10 +44,8 @@ namespace api.tests.Services
                 .Setup(x => x.CreateIfNotExistsAsync(PublicAccessType.None, null, null, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(Mock.Of<Azure.Response<BlobContainerInfo>>());
 
-                _mockContainerClient.Setup(client => client.GetBlockBlobClient(It.IsAny<string>()))
-                            .Returns(_mockBlockBlobClient.Object);
 
-            _blobService = new BlobService(_mockBlobServiceClient.Object);
+            _blobService = new TestableBlobService(_mockBlobServiceClient.Object, _mockBlockBlobClient.Object);
         }
 
         [Fact]

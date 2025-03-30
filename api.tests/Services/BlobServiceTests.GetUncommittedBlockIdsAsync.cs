@@ -27,9 +27,6 @@ public partial class BlobServiceTests
             committedBlocks: new List<BlobBlock>()
         );
 
-        _mockContainerClient.Setup(c => c.GetBlockBlobClient(blobName))
-            .Returns(mockBlobClient.Object);
-
         mockBlobClient.Setup(b => b.GetBlockListAsync(BlockListTypes.Uncommitted, null, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Response.FromValue(blockList, Mock.Of<Response>()));
 

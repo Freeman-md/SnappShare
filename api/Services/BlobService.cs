@@ -94,4 +94,10 @@ public class BlobService : IBlobService
     {
         throw new NotImplementedException();
     }
+
+    protected virtual BlockBlobClient GetBlockBlobClient(BlobContainerClient container, string blobName)
+    {
+        return container.GetBlockBlobClient(blobName);
+    }
+
 }
