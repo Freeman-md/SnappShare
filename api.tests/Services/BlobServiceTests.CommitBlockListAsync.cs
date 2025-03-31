@@ -43,6 +43,31 @@ public partial class BlobServiceTests
         );
     }
 
+    [Theory]
+    [InlineData("", "container-name")]
+    [InlineData(" ", "container-name")]
+    [InlineData(null, "container-name")]
+    [InlineData("blob-name", "")]
+    [InlineData("blob-name", " ")]
+    [InlineData("blob-name", null)]
+    public async Task CommitBlockListAsync_ShouldThrowArgumentException_OnInvalidInputs(string blobName, string containerName)
+    {
+        IEnumerable<string> blockIds = new List<string> { "block-001", "block-002" };
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            _blobService.CommitBlockListAsync(blobName, containerName, blockIds));
+    }
+
+    [Fact]
+    public async Task CommitBlockListAsync_ShouldThrowArgumentException_IfBlockIdsIsEmpty()
+    {
+        string blobName = "blob-name.txt";
+        IEnumerable<string> blockIds = new List<string>();
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            _blobService.CommitBlockListAsync(blobName, ContainerName, blockIds));
+    }
+
     [Fact]
     public async Task CommitBlockListAsync_ShouldThrowInvalidOperationException_IfContainerDoesNotExist() {
         IEnumerable<string> blockIds = new List<string> { "block-001", "block-002" };

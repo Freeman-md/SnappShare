@@ -55,6 +55,19 @@ public partial class BlobServiceTests
         Assert.Empty(result);
     }
 
+    [Theory]
+    [InlineData("", "container-name")]
+    [InlineData(" ", "container-name")]
+    [InlineData(null, "container-name")]
+    [InlineData("blob-name", "")]
+    [InlineData("blob-name", " ")]
+    [InlineData("blob-name", null)]
+    public async Task GetUncommittedBlockIdsAsync_ShouldThrowArgumentException_OnInvalidInputs(string blobName, string containerName)
+    {
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            _blobService.GetUncommittedBlockIdsAsync(blobName, containerName));
+    }
+
     [Fact]
     public async Task GetUncommittedBlockIdsAsync_ShouldThrowInvalidOperationException_IfContainerDoesNotExist() {
         _mockContainerClient
