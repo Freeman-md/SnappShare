@@ -7,12 +7,9 @@ using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using Azure.Storage.Sas;
 using Microsoft.AspNetCore.Http;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 public class BlobService : IBlobService
 {
-
     private readonly BlobServiceClient _blobServiceClient;
 
     public BlobService(BlobServiceClient blobServiceClient)
@@ -22,76 +19,60 @@ public class BlobService : IBlobService
 
     public async Task<(string fileUrl, string fileName)> UploadFileAsync(IFormFile file, string containerName, DateTimeOffset expiryTime)
     {
-        string uniqueFileName = $"{Path.GetFileNameWithoutExtension(file.FileName)}-{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
-
+        var uniqueFileName = $"{Path.GetFileNameWithoutExtension(file.FileName)}-{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
         return await UploadFileAsync(file, uniqueFileName, containerName, expiryTime);
     }
 
     public async Task<(string fileUrl, string fileName)> UploadFileAsync(IFormFile file, string fileName, string containerName, DateTimeOffset expiryTime)
     {
-        var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
-        await containerClient.CreateIfNotExistsAsync(PublicAccessType.None);
-
-        var blobClient = containerClient.GetBlobClient(fileName);
+        var blobClient = await GetBlobClientAsync(containerName, fileName);
 
         using var stream = file.OpenReadStream();
         await blobClient.UploadAsync(stream);
 
-        var metadata = new Dictionary<string, string>
-            {
-                { "expiryTime", expiryTime.ToUnixTimeSeconds().ToString() }
-            };
-        await blobClient.SetMetadataAsync(metadata);
+        await blobClient.SetMetadataAsync(new Dictionary<string, string>
+        {
+            { "expiryTime", expiryTime.ToUnixTimeSeconds().ToString() }
+        });
 
         return (blobClient.Uri.ToString(), fileName);
     }
 
-    public async Task<string> GenerateSasTokenAsync(string blobName, string containerName, DateTimeOffset expirtyTime)
+    public async Task<string> GenerateSasTokenAsync(string blobName, string containerName, DateTimeOffset expiryTime)
     {
-        var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
-        var blobClient = containerClient.GetBlobClient(blobName);
+        var blobClient = await GetBlobClientAsync(containerName, blobName);
 
         if (!await blobClient.ExistsAsync())
-        {
-            throw new InvalidOperationException("Blob does not exist");
-        }
+            throw new InvalidOperationException("Blob does not exist.");
 
-        UserDelegationKey delegationKey = await _blobServiceClient.GetUserDelegationKeyAsync(DateTimeOffset.UtcNow, expirtyTime);
+        var delegationKey = await _blobServiceClient.GetUserDelegationKeyAsync(DateTimeOffset.UtcNow, expiryTime);
 
-        BlobSasBuilder sasBuilder = new BlobSasBuilder
+        var sasBuilder = new BlobSasBuilder
         {
             BlobName = blobName,
             BlobContainerName = containerName,
-            ExpiresOn = expirtyTime,
+            ExpiresOn = expiryTime,
             Protocol = SasProtocol.Https,
             Resource = "b"
         };
 
         sasBuilder.SetPermissions(BlobSasPermissions.Read);
 
-        string sasToken = sasBuilder.ToSasQueryParameters(delegationKey, _blobServiceClient.AccountName).ToString();
-
+        var sasToken = sasBuilder.ToSasQueryParameters(delegationKey, _blobServiceClient.AccountName).ToString();
         return $"{blobClient.Uri}?{sasToken}";
     }
 
     public async Task UploadChunkBlockAsync(IFormFile file, string blobName, string containerName, string blockId)
     {
-        if (string.IsNullOrWhiteSpace(blobName))
-            throw new ArgumentException("Blob name must be provided.", nameof(blobName));
-
-        if (string.IsNullOrWhiteSpace(containerName))
-            throw new ArgumentException("Container name must be provided.", nameof(containerName));
-
-        if (string.IsNullOrWhiteSpace(blockId))
-            throw new ArgumentException("Block ID must be provided.", nameof(blockId));
+        ValidateInputs(blobName, containerName, blockId);
 
         if (file == null || file.Length <= 0)
             throw new ArgumentException("File must not be empty.", nameof(file));
 
-        BlobContainerClient containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
-        await containerClient.CreateIfNotExistsAsync();
+        var container = _blobServiceClient.GetBlobContainerClient(containerName);
+        await container.CreateIfNotExistsAsync();
 
-        BlockBlobClient blockBlobClient = GetBlockBlobClient(containerClient, blobName);
+        var blockBlobClient = GetBlockBlobClient(container, blobName);
 
         using var stream = file.OpenReadStream();
         await blockBlobClient.StageBlockAsync(blockId, stream);
@@ -99,82 +80,67 @@ public class BlobService : IBlobService
 
     public async Task CommitBlockListAsync(string blobName, string containerName, IEnumerable<string> blockIds)
     {
-        if (string.IsNullOrWhiteSpace(blobName))
-            throw new ArgumentException("Blob name must be provided.", nameof(blobName));
+        ValidateInputs(blobName, containerName);
 
-        if (string.IsNullOrWhiteSpace(containerName))
-            throw new ArgumentException("Container name must be provided.", nameof(containerName));
-
-        if (!blockIds.Any())
-        {
+        if (blockIds == null || !blockIds.Any())
             throw new ArgumentException("Block IDs must be provided.", nameof(blockIds));
-        }
 
-        BlobContainerClient containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
-
-        if (!await containerClient.ExistsAsync())
-        {
-            throw new InvalidOperationException("Container does not exist");
-        }
-
-        BlockBlobClient blockBlobClient = GetBlockBlobClient(containerClient, blobName);
+        var container = await GetContainerClientAsync(containerName);
+        var blockBlobClient = GetBlockBlobClient(container, blobName);
 
         await blockBlobClient.CommitBlockListAsync(blockIds);
     }
 
     public async Task<bool> BlockExistsAsync(string blobName, string containerName, string blockId)
     {
-        if (string.IsNullOrWhiteSpace(blobName))
-            throw new ArgumentException("Blob name must be provided.", nameof(blobName));
+        ValidateInputs(blobName, containerName, blockId);
 
-        if (string.IsNullOrWhiteSpace(containerName))
-            throw new ArgumentException("Container name must be provided.", nameof(containerName));
+        var container = await GetContainerClientAsync(containerName);
+        var blockBlobClient = GetBlockBlobClient(container, blobName);
 
-        if (string.IsNullOrWhiteSpace(blockId))
-            throw new ArgumentException("Block ID must be provided.", nameof(blockId));
-
-        BlobContainerClient containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
-
-        if (!await containerClient.ExistsAsync())
-        {
-            throw new InvalidOperationException("Container does not exist");
-        }
-
-        BlockBlobClient blockBlobClient = GetBlockBlobClient(containerClient, blobName);
-
-        var response = await blockBlobClient.GetBlockListAsync(BlockListTypes.Uncommitted);
-        var uncommittedBlocks = response.Value.UncommittedBlocks;
-
-        return uncommittedBlocks.Any(block => block.Name == blockId);
+        var blockList = await blockBlobClient.GetBlockListAsync(BlockListTypes.Uncommitted);
+        return blockList.Value.UncommittedBlocks.Any(b => b.Name == blockId);
     }
 
     public async Task<List<string>> GetUncommittedBlockIdsAsync(string blobName, string containerName)
     {
-        if (string.IsNullOrWhiteSpace(blobName))
-            throw new ArgumentException("Blob name must be provided.", nameof(blobName));
+        ValidateInputs(blobName, containerName);
 
-        if (string.IsNullOrWhiteSpace(containerName))
-            throw new ArgumentException("Container name must be provided.", nameof(containerName));
+        var container = await GetContainerClientAsync(containerName);
+        var blockBlobClient = GetBlockBlobClient(container, blobName);
 
-        BlobContainerClient containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+        var blockList = await blockBlobClient.GetBlockListAsync(BlockListTypes.Uncommitted);
+        return blockList.Value.UncommittedBlocks.Select(b => b.Name).ToList();
+    }
 
-        if (!await containerClient.ExistsAsync())
+    // 🔧 Helpers
+
+    private void ValidateInputs(params string[] inputs)
+    {
+        foreach (var input in inputs)
         {
-            throw new InvalidOperationException("Container does not exist");
+            if (string.IsNullOrWhiteSpace(input))
+                throw new ArgumentException($"{input} must be provided and non-empty.");
         }
+    }
 
-        BlockBlobClient blockBlobClient = GetBlockBlobClient(containerClient, blobName);
+    private async Task<BlobClient> GetBlobClientAsync(string containerName, string blobName)
+    {
+        var container = _blobServiceClient.GetBlobContainerClient(containerName);
+        await container.CreateIfNotExistsAsync(PublicAccessType.None);
+        return container.GetBlobClient(blobName);
+    }
 
-        var response = await blockBlobClient.GetBlockListAsync(BlockListTypes.Uncommitted);
-
-        return response.Value.UncommittedBlocks.Select(
-            block => block.Name
-        ).ToList();
+    private async Task<BlobContainerClient> GetContainerClientAsync(string containerName)
+    {
+        var container = _blobServiceClient.GetBlobContainerClient(containerName);
+        if (!await container.ExistsAsync())
+            throw new InvalidOperationException("Container does not exist.");
+        return container;
     }
 
     protected virtual BlockBlobClient GetBlockBlobClient(BlobContainerClient container, string blobName)
     {
         return container.GetBlockBlobClient(blobName);
     }
-
 }
