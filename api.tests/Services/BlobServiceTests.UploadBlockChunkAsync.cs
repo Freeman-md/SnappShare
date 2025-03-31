@@ -67,9 +67,9 @@ public partial class BlobServiceTests
     [InlineData("blob-name", "container-name", "")]
     [InlineData("blob-name", "container-name", " ")]
     [InlineData("blob-name", "container-name", null)]
-    public async Task UploadChunkBlockAsync_ShouldThrowArgumentException_OnInvalidInputs(string blobName, string containerName, string blockId) {
+    public async Task UploadChunkBlockAsync_ShouldThrowArgumentException_OnInvalidInputs(string? blobName, string? containerName, string? blockId) {
         await Assert.ThrowsAsync<ArgumentException>(
-            async () => await _blobService.UploadChunkBlockAsync(It.IsAny<IFormFile>(), blobName, containerName, blockId));
+            async () => await _blobService.UploadChunkBlockAsync(It.IsAny<IFormFile>(), blobName!, containerName!, blockId!));
     }
 
     [Fact]

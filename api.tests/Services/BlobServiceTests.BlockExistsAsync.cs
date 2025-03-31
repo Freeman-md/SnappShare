@@ -70,10 +70,10 @@ public partial class BlobServiceTests
     [InlineData("blob-name", "container-name", "")]
     [InlineData("blob-name", "container-name", " ")]
     [InlineData("blob-name", "container-name", null)]
-    public async Task BlockExistsAsync_ShouldThrowArgumentException_OnInvalidInputs(string blobName, string containerName, string blockId)
+    public async Task BlockExistsAsync_ShouldThrowArgumentException_OnInvalidInputs(string? blobName, string? containerName, string? blockId)
     {
         await Assert.ThrowsAsync<ArgumentException>(() =>
-            _blobService.BlockExistsAsync(blobName, containerName, blockId));
+            _blobService.BlockExistsAsync(blobName!, containerName!, blockId!));
     }
 
     [Fact]

@@ -31,9 +31,8 @@ public class Chunk {
     [MaxLength(64)]
     public required string ChunkHash { get; set; }
 
-    [Required]
     [MaxLength(500)]
-    public required string ChunkUrl { get; set; }
+    public string? ChunkUrl { get; set; }
 
     public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
 

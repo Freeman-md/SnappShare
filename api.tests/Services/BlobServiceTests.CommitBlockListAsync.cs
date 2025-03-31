@@ -50,12 +50,12 @@ public partial class BlobServiceTests
     [InlineData("blob-name", "")]
     [InlineData("blob-name", " ")]
     [InlineData("blob-name", null)]
-    public async Task CommitBlockListAsync_ShouldThrowArgumentException_OnInvalidInputs(string blobName, string containerName)
+    public async Task CommitBlockListAsync_ShouldThrowArgumentException_OnInvalidInputs(string? blobName, string? containerName)
     {
         IEnumerable<string> blockIds = new List<string> { "block-001", "block-002" };
 
         await Assert.ThrowsAsync<ArgumentException>(() =>
-            _blobService.CommitBlockListAsync(blobName, containerName, blockIds));
+            _blobService.CommitBlockListAsync(blobName!, containerName!, blockIds));
     }
 
     [Fact]

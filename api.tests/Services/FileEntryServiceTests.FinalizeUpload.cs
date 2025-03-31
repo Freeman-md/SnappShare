@@ -41,6 +41,9 @@ public partial class FileEntryServiceTests
         {
             fileEntry.Status = FileEntryStatus.Completed;
         });
+
+        //TODO: Not done here yet
+        await Task.CompletedTask;
     }
 
 }

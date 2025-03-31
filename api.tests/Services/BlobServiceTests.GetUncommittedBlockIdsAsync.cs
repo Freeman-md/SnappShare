@@ -62,10 +62,10 @@ public partial class BlobServiceTests
     [InlineData("blob-name", "")]
     [InlineData("blob-name", " ")]
     [InlineData("blob-name", null)]
-    public async Task GetUncommittedBlockIdsAsync_ShouldThrowArgumentException_OnInvalidInputs(string blobName, string containerName)
+    public async Task GetUncommittedBlockIdsAsync_ShouldThrowArgumentException_OnInvalidInputs(string? blobName, string? containerName)
     {
         await Assert.ThrowsAsync<ArgumentException>(() =>
-            _blobService.GetUncommittedBlockIdsAsync(blobName, containerName));
+            _blobService.GetUncommittedBlockIdsAsync(blobName!, containerName!));
     }
 
     [Fact]

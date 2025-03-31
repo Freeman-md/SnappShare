@@ -32,8 +32,6 @@ public class ChunkTests
     [InlineData("file123", 0, 0, "validhash", "http://snappshare.com/chunk/0")]     // Zero chunk size
     [InlineData("file123", 0, 1024, null, "http://snappshare.com/chunk/0")]         // Null hash
     [InlineData("file123", 0, 1024, "", "http://snappshare.com/chunk/0")]           // Empty hash
-    [InlineData("file123", 0, 1024, "validhash", null)]                             // Null URL
-    [InlineData("file123", 0, 1024, "validhash", "")]                               // Empty URL
     public void TestInvalidChunk_ShouldFailValidation(string? fileId, int chunkIndex, long chunkSize, string? chunkHash, string? chunkUrl)
     {
         // Arrange
