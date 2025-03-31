@@ -8,7 +8,6 @@ using Azure.Storage.Blobs.Specialized;
 using Azure.Storage.Sas;
 using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
-using System.Reflection.Metadata;
 using System.Threading.Tasks;
 
 public class BlobService : IBlobService
