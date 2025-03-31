@@ -18,9 +18,11 @@ public partial class FileEntryServiceTests
     private readonly Mock<IFileEntryRepository> _fileEntryRepository;
     private readonly Mock<IChunkRepository> _chunkRepository;
     private readonly IOptions<StorageOptions> _storageOptions;
-    private readonly IFileEntryService _fileEntryService;
-    
-    public FileEntryServiceTests() {
+    private readonly Mock<FileEntryService> _fileEntryServiceMock;
+    private readonly FileEntryService _fileEntryService;
+
+    public FileEntryServiceTests()
+    {
         _logger = new Mock<ILogger<FileEntryService>>();
         _blobService = new Mock<IBlobService>();
         _fileEntryRepository = new Mock<IFileEntryRepository>();
@@ -28,12 +30,15 @@ public partial class FileEntryServiceTests
         var storage = new StorageOptions { AccountName = "testAccount", ContainerName = "test-container" };
         _storageOptions = Options.Create(storage);
 
-        _fileEntryService = new FileEntryService(
+        _fileEntryServiceMock = new Mock<FileEntryService>(
             _logger.Object,
             _blobService.Object,
             _fileEntryRepository.Object,
             _chunkRepository.Object,
             _storageOptions
-        );
+        )
+        { CallBase = true };
+
+        _fileEntryService = _fileEntryServiceMock.Object;
     }
 }
