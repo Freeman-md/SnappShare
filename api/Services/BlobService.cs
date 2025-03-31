@@ -149,9 +149,28 @@ public class BlobService : IBlobService
         return uncommittedBlocks.Any(block => block.Name == blockId);
     }
 
-    public Task<List<string>> GetUncommittedBlockIdsAsync(string blobName, string containerName)
+    public async Task<List<string>> GetUncommittedBlockIdsAsync(string blobName, string containerName)
     {
-        throw new NotImplementedException();
+        if (string.IsNullOrWhiteSpace(blobName))
+            throw new ArgumentException("Blob name must be provided.", nameof(blobName));
+
+        if (string.IsNullOrWhiteSpace(containerName))
+            throw new ArgumentException("Container name must be provided.", nameof(containerName));
+
+        BlobContainerClient containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+
+        if (!await containerClient.ExistsAsync())
+        {
+            throw new InvalidOperationException("Container does not exist");
+        }
+
+        BlockBlobClient blockBlobClient = GetBlockBlobClient(containerClient, blobName);
+
+        var response = await blockBlobClient.GetBlockListAsync(BlockListTypes.Uncommitted);
+
+        return response.Value.UncommittedBlocks.Select(
+            block => block.Name
+        ).ToList();
     }
 
     protected virtual BlockBlobClient GetBlockBlobClient(BlobContainerClient container, string blobName)

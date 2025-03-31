@@ -1,6 +1,7 @@
 using System;
 using api.Models;
 using api.tests.Builders;
+using Azure;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.AspNetCore.Http;
@@ -24,7 +25,7 @@ public partial class BlobServiceTests
 
         await _blobService.CommitBlockListAsync(fileEntry.FileName, ContainerName, blockIds);
 
-        _mockContainerClient.Verify(client => client.CreateIfNotExistsAsync(It.IsAny<PublicAccessType>(), null, null, It.IsAny<CancellationToken>()), Times.Once);
+        _mockContainerClient.Verify(client => client.ExistsAsync(It.IsAny<CancellationToken>()), Times.Once);
         _mockBlockBlobClient.Verify(client => client.CommitBlockListAsync(It.IsAny<IEnumerable<string>>(), null, null, null, null, It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -40,6 +41,19 @@ public partial class BlobServiceTests
         await Assert.ThrowsAsync<Exception>(() =>
             _blobService.CommitBlockListAsync("blob.txt", ContainerName, blockIds)
         );
+    }
+
+    [Fact]
+    public async Task CommitBlockListAsync_ShouldThrowInvalidOperationException_IfContainerDoesNotExist() {
+        IEnumerable<string> blockIds = new List<string> { "block-001", "block-002" };
+
+        _mockContainerClient
+                    .Setup(client => client.ExistsAsync(It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(Response.FromValue(false, Mock.Of<Response>()));
+
+         await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _blobService.CommitBlockListAsync("blob.txt", ContainerName, blockIds)
+        );   
     }
 
 }

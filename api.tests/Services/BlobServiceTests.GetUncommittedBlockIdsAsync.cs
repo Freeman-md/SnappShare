@@ -16,8 +16,6 @@ public partial class BlobServiceTests
         string blockId1 = Convert.ToBase64String(Encoding.UTF8.GetBytes("000001"));
         string blockId2 = Convert.ToBase64String(Encoding.UTF8.GetBytes("000002"));
 
-        var mockBlobClient = new Mock<BlockBlobClient>();
-
         var blockList = BlobsModelFactory.BlockList(
             uncommittedBlocks: new List<BlobBlock>
             {
@@ -27,7 +25,7 @@ public partial class BlobServiceTests
             committedBlocks: new List<BlobBlock>()
         );
 
-        mockBlobClient.Setup(b => b.GetBlockListAsync(BlockListTypes.Uncommitted, null, null, It.IsAny<CancellationToken>()))
+        _mockBlockBlobClient.Setup(b => b.GetBlockListAsync(BlockListTypes.Uncommitted, null, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Response.FromValue(blockList, Mock.Of<Response>()));
 
         var result = await _blobService.GetUncommittedBlockIdsAsync(blobName, ContainerName);
@@ -43,23 +41,29 @@ public partial class BlobServiceTests
     {
         string blobName = "sample-file.txt";
 
-        var mockBlobClient = new Mock<BlockBlobClient>();
-
         var blockList = BlobsModelFactory.BlockList(
             uncommittedBlocks: new List<BlobBlock>(),
             committedBlocks: new List<BlobBlock>()
         );
 
-        _mockContainerClient.Setup(c => c.GetBlockBlobClient(blobName))
-            .Returns(mockBlobClient.Object);
-
-        mockBlobClient.Setup(b => b.GetBlockListAsync(BlockListTypes.Uncommitted, null, null, It.IsAny<CancellationToken>()))
+        _mockBlockBlobClient.Setup(b => b.GetBlockListAsync(BlockListTypes.Uncommitted, null, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Response.FromValue(blockList, Mock.Of<Response>()));
 
         var result = await _blobService.GetUncommittedBlockIdsAsync(blobName, ContainerName);
 
         Assert.NotNull(result);
         Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetUncommittedBlockIdsAsync_ShouldThrowInvalidOperationException_IfContainerDoesNotExist() {
+        _mockContainerClient
+                    .Setup(client => client.ExistsAsync(It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(Response.FromValue(false, Mock.Of<Response>()));
+
+         await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _blobService.GetUncommittedBlockIdsAsync("blob.txt", ContainerName)
+        );   
     }
 
 
