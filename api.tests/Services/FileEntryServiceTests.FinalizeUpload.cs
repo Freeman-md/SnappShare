@@ -92,7 +92,6 @@ public partial class FileEntryServiceTests
     public async Task FinalizeUpload_ShouldReturnIncompleteStatus_WhenChunksAreMissing()
     {
         FileEntry fileEntry = new FileEntryBuilder()
-                                                        .WithStatus(FileEntryStatus.Completed)
                                                         .WithTotalChunks(5)
                                                         .WithUploadedChunks(2)
                                                         .Build();
@@ -144,7 +143,7 @@ public partial class FileEntryServiceTests
 
         await Assert.ThrowsAsync<KeyNotFoundException>(async () => await _fileEntryService.FinalizeUpload(fileEntry.Id));
 
-        _fileEntryRepository.Verify(repo => repo.FindFileEntryById(It.IsAny<string>()), Times.Never);
+        _fileEntryRepository.Verify(repo => repo.FindFileEntryById(It.IsAny<string>()), Times.Once);
         _chunkRepository.Verify(repo => repo.GetUploadedChunksByFileId(It.IsAny<string>()), Times.Never);
         _blobService.Verify(repo => repo.CommitBlockListAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IEnumerable<string>>()), Times.Never);
         _fileEntryRepository.Verify(repo => repo.LockFile(It.IsAny<string>()), Times.Never);
@@ -190,40 +189,10 @@ public partial class FileEntryServiceTests
 
         await Assert.ThrowsAsync<Exception>(() => _fileEntryService.FinalizeUpload(fileEntry.Id));
 
-        _fileEntryRepository.Verify(repo => repo.FindFileEntryById(It.IsAny<string>()), Times.Never);
-        _chunkRepository.Verify(repo => repo.GetUploadedChunksByFileId(It.IsAny<string>()), Times.Never);
-        _blobService.Verify(repo => repo.CommitBlockListAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IEnumerable<string>>()), Times.Never);
-        _fileEntryRepository.Verify(repo => repo.LockFile(It.IsAny<string>()), Times.Never);
-        _fileEntryRepository.Verify(repo => repo.UnlockFile(It.IsAny<string>()), Times.Once);
-        _fileEntryRepository.Verify(repo => repo.MarkUploadComplete(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task FinalizeUpload_ShouldUnlockFile_WhenExceptionOccurs()
-    {
-        var fileEntry = new FileEntryBuilder()
-                                .WithTotalChunks(3)
-                                .WithUploadedChunks(3)
-                                .Build();
-
-        _fileEntryRepository.Setup(repo => repo.FindFileEntryById(fileEntry.Id))
-            .ReturnsAsync(fileEntry);
-
-        _chunkRepository.Setup(repo => repo.GetUploadedChunksByFileId(fileEntry.Id))
-            .ReturnsAsync(fileEntry.Chunks.ToList());
-
-        _fileEntryRepository.Setup(repo => repo.LockFile(fileEntry.Id));
-        _fileEntryRepository.Setup(repo => repo.UnlockFile(fileEntry.Id));
-
-        _blobService.Setup(blob => blob.CommitBlockListAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IEnumerable<string>>()))
-            .ThrowsAsync(new InvalidOperationException("Simulated failure"));
-
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _fileEntryService.FinalizeUpload(fileEntry.Id));
-
-        _fileEntryRepository.Verify(repo => repo.FindFileEntryById(It.IsAny<string>()), Times.Never);
-        _chunkRepository.Verify(repo => repo.GetUploadedChunksByFileId(It.IsAny<string>()), Times.Never);
-        _blobService.Verify(repo => repo.CommitBlockListAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IEnumerable<string>>()), Times.Never);
-        _fileEntryRepository.Verify(repo => repo.LockFile(It.IsAny<string>()), Times.Never);
+        _fileEntryRepository.Verify(repo => repo.FindFileEntryById(It.IsAny<string>()), Times.Once);
+        _chunkRepository.Verify(repo => repo.GetUploadedChunksByFileId(It.IsAny<string>()), Times.Once);
+        _blobService.Verify(repo => repo.CommitBlockListAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IEnumerable<string>>()), Times.Once);
+        _fileEntryRepository.Verify(repo => repo.LockFile(It.IsAny<string>()), Times.Once);
         _fileEntryRepository.Verify(repo => repo.UnlockFile(It.IsAny<string>()), Times.Once);
         _fileEntryRepository.Verify(repo => repo.MarkUploadComplete(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }

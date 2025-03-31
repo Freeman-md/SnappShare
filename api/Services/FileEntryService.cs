@@ -71,9 +71,63 @@ public class FileEntryService : IFileEntryService
         };
     }
 
-    public Task<UploadResponseDto> FinalizeUpload(string fileId)
+    public async Task<UploadResponseDto> FinalizeUpload(string fileId)
     {
-        throw new NotImplementedException();
+        try
+        {
+            if (string.IsNullOrWhiteSpace(fileId))
+                throw new ArgumentException("File ID must be provided.", nameof(fileId));
+
+            FileEntry? fileEntry = await _fileEntryRepository.FindFileEntryById(fileId);
+
+            if (fileEntry == null) {
+                throw new KeyNotFoundException("File not found");
+            }
+
+            if (fileEntry.Status == FileEntryStatus.Completed) {
+                return new UploadResponseDto {
+                    Status = UploadResponseDtoStatus.COMPLETE,
+                    FileUrl = fileEntry.FileUrl
+                };
+            }
+
+            await _fileEntryRepository.LockFile(fileId);
+
+            List<Chunk> uploadedChunks = await _chunkRepository.GetUploadedChunksByFileId(fileId);
+
+            if (uploadedChunks.Count != fileEntry.TotalChunks) {
+                await _fileEntryRepository.UnlockFile(fileId);
+                
+                return new UploadResponseDto {
+                    Status = UploadResponseDtoStatus.FAILED,
+                    FileUrl = fileEntry.FileUrl
+                };
+            }
+
+            List<string> blockIds = uploadedChunks
+                                        .OrderBy(chunk => chunk.ChunkIndex)
+                                        .Select(chunk => chunk.BlockId)
+                                        .ToList();
+
+            await _blobService.CommitBlockListAsync(fileEntry.FileName, BlobContainerName, blockIds);
+
+            await _fileEntryRepository.MarkUploadComplete(fileId, fileEntry.FileUrl);
+
+            await _fileEntryRepository.UnlockFile(fileId);
+
+            return new UploadResponseDto {
+                Status = UploadResponseDtoStatus.COMPLETE,
+                FileUrl = fileEntry.FileUrl
+            };
+        }
+        catch
+        {
+            throw;
+        }
+        finally
+        {
+            await _fileEntryRepository.UnlockFile(fileId);
+        }
     }
 
     public Task<UploadResponseDto> HandleFileUpload(string fileName, string fileHash, long fileSize, int chunkIndex, int totalChunks, IFormFile chunkFile, string chunkHash)
