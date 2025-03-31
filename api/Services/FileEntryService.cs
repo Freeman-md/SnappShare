@@ -82,69 +82,69 @@ public class FileEntryService : IFileEntryService
     }
 
     public async Task<UploadResponseDto> UploadChunk(string fileId, string fileName, int chunkIndex, IFormFile chunkFile, string chunkHash)
-{
-    try
     {
-        if (string.IsNullOrWhiteSpace(fileId))
-            throw new ArgumentException("File ID must be provided.", nameof(fileId));
-
-        if (string.IsNullOrWhiteSpace(fileName))
-            throw new ArgumentException("File Name must be provided.", nameof(fileName));
-
-        if (chunkIndex < 0)
-            throw new ArgumentException("Chunk index must be a non-negative integer.", nameof(chunkIndex));
-
-        if (chunkFile == null || chunkFile.Length <= 0)
-            throw new ArgumentException("Chunk file must not be null or empty.", nameof(chunkFile));
-
-        if (string.IsNullOrWhiteSpace(chunkHash))
-            throw new ArgumentException("Chunk hash must be provided.", nameof(chunkHash));
-
-        await _fileEntryRepository.LockFile(fileId);
-
-        var existingChunk = await _chunkRepository.FindChunkByFileIdAndChunkIndex(fileId, chunkIndex);
-        if (existingChunk != null)
+        try
         {
+            if (string.IsNullOrWhiteSpace(fileId))
+                throw new ArgumentException("File ID must be provided.", nameof(fileId));
+
+            if (string.IsNullOrWhiteSpace(fileName))
+                throw new ArgumentException("File Name must be provided.", nameof(fileName));
+
+            if (chunkIndex < 0)
+                throw new ArgumentException("Chunk index must be a non-negative integer.", nameof(chunkIndex));
+
+            if (chunkFile == null || chunkFile.Length <= 0)
+                throw new ArgumentException("Chunk file must not be null or empty.", nameof(chunkFile));
+
+            if (string.IsNullOrWhiteSpace(chunkHash))
+                throw new ArgumentException("Chunk hash must be provided.", nameof(chunkHash));
+
+            await _fileEntryRepository.LockFile(fileId);
+
+            var existingChunk = await _chunkRepository.FindChunkByFileIdAndChunkIndex(fileId, chunkIndex);
+            if (existingChunk != null)
+            {
+                return new UploadResponseDto
+                {
+                    Status = UploadResponseDtoStatus.SKIPPED,
+                    Message = "Chunk already recorded in database"
+                };
+            }
+
+            string blockId = Convert.ToBase64String(Encoding.UTF8.GetBytes(chunkIndex.ToString("D6")));
+
+            bool blockExists = await _blobService.BlockExistsAsync(fileName, BlobContainerName, blockId);
+
+            if (!blockExists)
+            {
+                await _blobService.UploadChunkBlockAsync(chunkFile, fileName, BlobContainerName, blockId);
+            }
+
+            var chunk = new Chunk
+            {
+                FileId = fileId,
+                ChunkIndex = chunkIndex,
+                ChunkHash = chunkHash,
+            };
+
+            var savedChunk = await _chunkRepository.SaveChunk(chunk);
+
             return new UploadResponseDto
             {
-                Status = UploadResponseDtoStatus.SKIPPED,
-                Message = "Chunk already recorded in database"
+                Status = UploadResponseDtoStatus.SUCCESS,
+                UploadedChunk = savedChunk.ChunkIndex
             };
         }
-
-        string blockId = Convert.ToBase64String(Encoding.UTF8.GetBytes(chunkIndex.ToString("D6")));
-
-        bool blockExists = await _blobService.BlockExistsAsync(fileName, BlobContainerName, blockId);
-
-        if (!blockExists)
+        catch
         {
-            await _blobService.UploadChunkBlockAsync(chunkFile, fileName, BlobContainerName, blockId);
+            throw;
         }
-
-        var chunk = new Chunk
+        finally
         {
-            FileId = fileId,
-            ChunkIndex = chunkIndex,
-            ChunkHash = chunkHash,
-        };
-
-        var savedChunk = await _chunkRepository.SaveChunk(chunk);
-
-        return new UploadResponseDto
-        {
-            Status = UploadResponseDtoStatus.SUCCESS,
-            UploadedChunk = savedChunk.ChunkIndex
-        };
+            await _fileEntryRepository.UnlockFile(fileId);
+        }
     }
-    catch
-    {
-        throw;
-    }
-    finally
-    {
-        await _fileEntryRepository.UnlockFile(fileId);
-    }
-}
 
 
     public async Task<FileEntry> CreateFileEntry(string fileName, string fileHash, long fileSize, int totalChunks)
