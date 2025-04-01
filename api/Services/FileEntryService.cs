@@ -35,7 +35,7 @@ public class FileEntryService : IFileEntryService
 
         BlobContainerName = storageOptions.Value.ContainerName;
     }
-    public async Task<UploadResponseDto> CheckFileUploadStatus(string fileHash)
+    public virtual async Task<UploadResponseDto> CheckFileUploadStatus(string fileHash)
     {
         if (string.IsNullOrWhiteSpace(fileHash))
             throw new ArgumentException("File hash must be provided.");
@@ -71,7 +71,7 @@ public class FileEntryService : IFileEntryService
         };
     }
 
-    public async Task<UploadResponseDto> FinalizeUpload(string fileId)
+    public virtual async Task<UploadResponseDto> FinalizeUpload(string fileId)
     {
         try
         {
@@ -135,7 +135,7 @@ public class FileEntryService : IFileEntryService
         throw new NotImplementedException();
     }
 
-    public async Task<UploadResponseDto> UploadChunk(string fileId, string fileName, int chunkIndex, IFormFile chunkFile, string chunkHash)
+    public virtual async Task<UploadResponseDto> UploadChunk(string fileId, string fileName, int chunkIndex, IFormFile chunkFile, string chunkHash)
     {
         try
         {
@@ -201,7 +201,7 @@ public class FileEntryService : IFileEntryService
     }
 
 
-    public async Task<FileEntry> CreateFileEntry(string fileName, string fileHash, long fileSize, int totalChunks)
+    public virtual async Task<FileEntry> CreateFileEntry(string fileName, string fileHash, long fileSize, int totalChunks)
     {
         if (string.IsNullOrWhiteSpace(fileName))
             throw new ArgumentException("File Name must be provided.", nameof(fileName));
