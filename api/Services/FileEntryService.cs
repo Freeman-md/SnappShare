@@ -37,8 +37,7 @@ public class FileEntryService : IFileEntryService
     }
     public virtual async Task<UploadResponseDto> CheckFileUploadStatus(string fileHash)
     {
-        if (string.IsNullOrWhiteSpace(fileHash))
-            throw new ArgumentException("File hash must be provided.");
+        ValidateString(fileHash, nameof(fileHash));
 
         FileEntry? fileEntry = await _fileEntryRepository.FindFileEntryByFileHash(fileHash);
 
@@ -75,8 +74,7 @@ public class FileEntryService : IFileEntryService
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(fileId))
-                throw new ArgumentException("File ID must be provided.", nameof(fileId));
+            ValidateString(fileId, nameof(fileId));
 
             FileEntry? fileEntry = await _fileEntryRepository.FindFileEntryById(fileId);
 
@@ -138,26 +136,13 @@ public class FileEntryService : IFileEntryService
 
     public async Task<UploadResponseDto> HandleFileUpload(string fileName, string fileHash, long fileSize, int chunkIndex, int totalChunks, IFormFile chunkFile, string chunkHash)
     {
-        if (string.IsNullOrWhiteSpace(fileName))
-            throw new ArgumentException("File Name must be provided.", nameof(fileName));
-
-        if (string.IsNullOrWhiteSpace(fileHash))
-            throw new ArgumentException("File Hash must be provided.", nameof(fileHash));
-
-        if (totalChunks <= 0)
-            throw new ArgumentException("Total Chunks must be a non-negative integer and not be 0.", nameof(totalChunks));
-
-        if (fileSize <= 0)
-            throw new ArgumentException("File size must be a non-negative integer and not be 0.", nameof(fileSize));
-
-        if (chunkIndex < 0)
-            throw new ArgumentException("Chunk index must be a non-negative integer.", nameof(chunkIndex));
-
-        if (chunkFile == null || chunkFile.Length <= 0)
-            throw new ArgumentException("Chunk file must not be null or empty.", nameof(chunkFile));
-
-        if (string.IsNullOrWhiteSpace(chunkHash))
-            throw new ArgumentException("Chunk hash must be provided.", nameof(chunkHash));
+        ValidateString(fileName, nameof(fileName));
+        ValidateString(fileHash, nameof(fileHash));
+        ValidateString(chunkHash, nameof(chunkHash));
+        ValidateNonNegativeNumber(chunkIndex, nameof(chunkIndex));
+        ValidatePositiveNumber(totalChunks, nameof(totalChunks));
+        ValidatePositiveNumber(fileSize, nameof(fileSize));
+        ValidateChunkFile(chunkFile, nameof(chunkFile));
 
         string fileId;
         var fileUploadStatus = await CheckFileUploadStatus(fileHash);
@@ -189,20 +174,12 @@ public class FileEntryService : IFileEntryService
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(fileId))
-                throw new ArgumentException("File ID must be provided.", nameof(fileId));
 
-            if (string.IsNullOrWhiteSpace(fileName))
-                throw new ArgumentException("File Name must be provided.", nameof(fileName));
-
-            if (chunkIndex < 0)
-                throw new ArgumentException("Chunk index must be a non-negative integer.", nameof(chunkIndex));
-
-            if (chunkFile == null || chunkFile.Length <= 0)
-                throw new ArgumentException("Chunk file must not be null or empty.", nameof(chunkFile));
-
-            if (string.IsNullOrWhiteSpace(chunkHash))
-                throw new ArgumentException("Chunk hash must be provided.", nameof(chunkHash));
+            ValidateString(fileName, nameof(fileName));
+            ValidateString(fileId, nameof(fileId));
+            ValidateString(chunkHash, nameof(chunkHash));
+            ValidateNonNegativeNumber(chunkIndex, nameof(chunkIndex));
+            ValidateChunkFile(chunkFile, nameof(chunkFile));
 
             await _fileEntryRepository.LockFile(fileId);
 
@@ -280,4 +257,29 @@ public class FileEntryService : IFileEntryService
 
         return createdFileEntry;
     }
+
+    private static void ValidateString(string? value, string name, string message = "must be provided.")
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            throw new ArgumentException($"{name} {message}", name);
+    }
+
+    private static void ValidatePositiveNumber(long value, string name)
+    {
+        if (value <= 0)
+            throw new ArgumentException($"{name} must be a positive number.", name);
+    }
+
+    private static void ValidateNonNegativeNumber(int value, string name)
+    {
+        if (value < 0)
+            throw new ArgumentException($"{name} must be a non-negative number.", name);
+    }
+
+    private static void ValidateChunkFile(IFormFile? file, string name = "chunkFile")
+    {
+        if (file == null || file.Length <= 0)
+            throw new ArgumentException("Chunk file must not be null or empty.", name);
+    }
+
 }
