@@ -80,12 +80,15 @@ public class FileEntryService : IFileEntryService
 
             FileEntry? fileEntry = await _fileEntryRepository.FindFileEntryById(fileId);
 
-            if (fileEntry == null) {
+            if (fileEntry == null)
+            {
                 throw new KeyNotFoundException("File not found");
             }
 
-            if (fileEntry.Status == FileEntryStatus.Completed) {
-                return new UploadResponseDto {
+            if (fileEntry.Status == FileEntryStatus.Completed)
+            {
+                return new UploadResponseDto
+                {
                     Status = UploadResponseDtoStatus.COMPLETE,
                     FileUrl = fileEntry.FileUrl
                 };
@@ -95,11 +98,13 @@ public class FileEntryService : IFileEntryService
 
             List<Chunk> uploadedChunks = await _chunkRepository.GetUploadedChunksByFileId(fileId);
 
-            if (uploadedChunks.Count != fileEntry.TotalChunks) {
+            if (uploadedChunks.Count != fileEntry.TotalChunks)
+            {
                 await _fileEntryRepository.UnlockFile(fileId);
-                
-                return new UploadResponseDto {
-                    Status = UploadResponseDtoStatus.FAILED,
+
+                return new UploadResponseDto
+                {
+                    Status = UploadResponseDtoStatus.PARTIAL,
                     FileUrl = fileEntry.FileUrl
                 };
             }
@@ -115,7 +120,8 @@ public class FileEntryService : IFileEntryService
 
             await _fileEntryRepository.UnlockFile(fileId);
 
-            return new UploadResponseDto {
+            return new UploadResponseDto
+            {
                 Status = UploadResponseDtoStatus.COMPLETE,
                 FileUrl = fileEntry.FileUrl
             };
@@ -130,9 +136,53 @@ public class FileEntryService : IFileEntryService
         }
     }
 
-    public Task<UploadResponseDto> HandleFileUpload(string fileName, string fileHash, long fileSize, int chunkIndex, int totalChunks, IFormFile chunkFile, string chunkHash)
+    public async Task<UploadResponseDto> HandleFileUpload(string fileName, string fileHash, long fileSize, int chunkIndex, int totalChunks, IFormFile chunkFile, string chunkHash)
     {
-        throw new NotImplementedException();
+        if (string.IsNullOrWhiteSpace(fileName))
+            throw new ArgumentException("File Name must be provided.", nameof(fileName));
+
+        if (string.IsNullOrWhiteSpace(fileHash))
+            throw new ArgumentException("File Hash must be provided.", nameof(fileHash));
+
+        if (totalChunks <= 0)
+            throw new ArgumentException("Total Chunks must be a non-negative integer and not be 0.", nameof(totalChunks));
+
+        if (fileSize <= 0)
+            throw new ArgumentException("File size must be a non-negative integer and not be 0.", nameof(fileSize));
+
+        if (chunkIndex < 0)
+            throw new ArgumentException("Chunk index must be a non-negative integer.", nameof(chunkIndex));
+
+        if (chunkFile == null || chunkFile.Length <= 0)
+            throw new ArgumentException("Chunk file must not be null or empty.", nameof(chunkFile));
+
+        if (string.IsNullOrWhiteSpace(chunkHash))
+            throw new ArgumentException("Chunk hash must be provided.", nameof(chunkHash));
+
+        string fileId;
+        var fileUploadStatus = await CheckFileUploadStatus(fileHash);
+
+        fileId = fileUploadStatus.Status == UploadResponseDtoStatus.NEW
+            ? (await CreateFileEntry(fileName, fileHash, fileSize, totalChunks)).Id
+            : fileUploadStatus.FileId!;
+
+        var chunkUploadResponse = await UploadChunk(fileId, fileName, chunkIndex, chunkFile, chunkHash);
+
+        var uploadedChunks = await _chunkRepository.GetUploadedChunksByFileId(fileId);
+
+        if (uploadedChunks.Count == totalChunks)
+        {
+            var finalizeUploadResponse = await FinalizeUpload(fileId);
+            return finalizeUploadResponse;
+        }
+
+        return new UploadResponseDto
+        {
+            Status = chunkUploadResponse.Status,
+            UploadedChunk = chunkUploadResponse.UploadedChunk,
+            Message = chunkUploadResponse.Message,
+            FileId = fileId
+        };
     }
 
     public virtual async Task<UploadResponseDto> UploadChunk(string fileId, string fileName, int chunkIndex, IFormFile chunkFile, string chunkHash)

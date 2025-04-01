@@ -119,7 +119,7 @@ public partial class FileEntryServiceTests
         var response = await _fileEntryService.FinalizeUpload(fileEntry.Id);
 
         Assert.NotNull(response);
-        Assert.Equal(UploadResponseDtoStatus.FAILED, response.Status);
+        Assert.Equal(UploadResponseDtoStatus.PARTIAL, response.Status);
 
         _fileEntryRepository.Verify(repo => repo.FindFileEntryById(It.IsAny<string>()), Times.Once);
         _chunkRepository.Verify(repo => repo.GetUploadedChunksByFileId(It.IsAny<string>()), Times.Once);

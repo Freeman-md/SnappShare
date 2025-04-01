@@ -12,7 +12,7 @@ public partial class FileEntryServiceTests
 {
     private (FileEntry fileEntry, Chunk chunk, IFormFile chunkFile) SetupFileEntryChunkAndForm()
     {
-        var fileEntry = new FileEntryBuilder().Build();
+        var fileEntry = new FileEntryBuilder().WithTotalChunks(3).WithFileSize(100).Build();
         var chunk = new ChunkBuilder().WithFileEntry(fileEntry).Build();
         var fileStream = new MemoryStream(new byte[1024]);
         var chunkFile = new FormFile(fileStream, 0, fileStream.Length, "file", "chunk1");
@@ -82,7 +82,9 @@ public partial class FileEntryServiceTests
     [Fact]
     public async Task HandleFileUpload_ShouldFinalizeUpload_WhenAllChunksAreUploaded()
     {
-        var (fileEntry, chunk, chunkFile) = SetupFileEntryChunkAndForm();
+        var (_, chunk, chunkFile) = SetupFileEntryChunkAndForm();
+
+        var fileEntry = new FileEntryBuilder().WithTotalChunks(3).WithFileSize(100).WithUploadedChunks(3).Build();
 
 
         _fileEntryServiceMock.Setup(s => s.CheckFileUploadStatus(fileEntry.FileHash))
@@ -92,7 +94,7 @@ public partial class FileEntryServiceTests
             .ReturnsAsync(new UploadResponseDto { Status = UploadResponseDtoStatus.SUCCESS });
 
         _chunkRepository.Setup(r => r.GetUploadedChunksByFileId(fileEntry.Id))
-            .ReturnsAsync(new List<Chunk> { chunk, new ChunkBuilder().WithChunkIndex(1).Build() });
+            .ReturnsAsync(fileEntry.Chunks.ToList());
 
         _fileEntryServiceMock.Setup(s => s.FinalizeUpload(fileEntry.Id))
             .ReturnsAsync(new UploadResponseDto { Status = UploadResponseDtoStatus.COMPLETE });
