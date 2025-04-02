@@ -35,6 +35,9 @@ public class FileEntryController : ControllerBase
     [ProducesResponseType(typeof(ErrorApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> HandleFileUpload([FromForm] HandleFileUploadDto dto)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(new ErrorApiResponse<object>("Invalid Request"));
+
         try
         {
             var result = await _fileEntryService.HandleFileUpload(

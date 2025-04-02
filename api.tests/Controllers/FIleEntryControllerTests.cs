@@ -5,6 +5,7 @@ using api.Models.DTOs;
 using api.Services;
 using api.tests.Builders;
 using api.Tests.Interfaces.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -107,6 +108,30 @@ public class FileEntryControllerTests
         var error = Assert.IsType<ErrorApiResponse<object>>(badRequest.Value);
         Assert.Equal("Unexpected", error.ErrorMessage);
     }
+
+[Fact]
+public async Task HandleFileUpload_ShouldReturnBadRequest_WhenModelStateIsInvalid()
+{
+    var dto = new HandleFileUploadDtoBuilder().Build();
+
+    _fileEntryController.ModelState.AddModelError("FileName", "File name is required");
+
+    var result = await _fileEntryController.HandleFileUpload(dto);
+
+    var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+    var errorResponse = Assert.IsType<ErrorApiResponse<object>>(badRequest.Value);
+    Assert.Equal("Invalid Request", errorResponse.ErrorMessage);
+
+    _fileEntryService.Verify(s => s.HandleFileUpload(
+        It.IsAny<string>(),
+        It.IsAny<string>(),
+        It.IsAny<long>(),
+        It.IsAny<int>(),
+        It.IsAny<int>(),
+        It.IsAny<IFormFile>(),
+        It.IsAny<string>()
+    ), Times.Never);
+}
 
 
 
