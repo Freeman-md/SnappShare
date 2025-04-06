@@ -70,6 +70,80 @@ public class FileEntryService : IFileEntryService
         };
     }
 
+    public virtual async Task<FileEntry> CreateFileEntry(string fileName, string fileHash, long fileSize, int totalChunks)
+    {
+        ValidateString(fileName, nameof(fileName));
+        ValidateString(fileHash, nameof(fileHash));
+        ValidatePositiveNumber(totalChunks, nameof(totalChunks));
+        ValidatePositiveNumber(fileSize, nameof(fileSize));
+
+        var fileEntry = new FileEntry
+        {
+            FileName = fileName,
+            FileHash = fileHash,
+            FileSize = fileSize,
+            TotalChunks = totalChunks,
+        };
+
+        var createdFileEntry = await _fileEntryRepository.CreateFileEntry(fileEntry);
+
+        return createdFileEntry;
+    }
+
+    public virtual async Task<UploadResponseDto> UploadChunk(string fileId, string fileName, int chunkIndex, IFormFile chunkFile, string chunkHash)
+    {
+        try
+        {
+
+            ValidateString(fileName, nameof(fileName));
+            ValidateString(fileId, nameof(fileId));
+            ValidateString(chunkHash, nameof(chunkHash));
+            ValidateNonNegativeNumber(chunkIndex, nameof(chunkIndex));
+            ValidateChunkFile(chunkFile, nameof(chunkFile));
+
+            await _fileEntryRepository.LockFile(fileId);
+
+            var existingChunk = await _chunkRepository.FindChunkByFileIdAndChunkIndex(fileId, chunkIndex);
+            if (existingChunk != null)
+            {
+                return new UploadResponseDto
+                {
+                    Status = UploadResponseDtoStatus.SKIPPED,
+                    Message = "Chunk already recorded in database"
+                };
+            }
+
+            string blockId = Convert.ToBase64String(Encoding.UTF8.GetBytes(chunkIndex.ToString("D6")));
+
+            await _blobService.UploadChunkBlockAsync(chunkFile, fileName, BlobContainerName, blockId);
+
+            var chunk = new Chunk
+            {
+                FileId = fileId,
+                ChunkIndex = chunkIndex,
+                ChunkHash = chunkHash,
+                ChunkSize = chunkFile.Length
+            };
+
+            var savedChunk = await _chunkRepository.SaveChunk(chunk);
+
+            return new UploadResponseDto
+            {
+                Status = UploadResponseDtoStatus.SUCCESS,
+                UploadedChunk = savedChunk.ChunkIndex,
+                Message = "Chunk staged successfully"
+            };
+        }
+        catch
+        {
+            throw;
+        }
+        finally
+        {
+            await _fileEntryRepository.UnlockFile(fileId);
+        }
+    }
+
     public virtual async Task<UploadResponseDto> FinalizeUpload(string fileId)
     {
         try
@@ -98,8 +172,6 @@ public class FileEntryService : IFileEntryService
 
             if (uploadedChunks.Count != fileEntry.TotalChunks)
             {
-                await _fileEntryRepository.UnlockFile(fileId);
-
                 return new UploadResponseDto
                 {
                     Status = UploadResponseDtoStatus.PARTIAL,
@@ -114,9 +186,10 @@ public class FileEntryService : IFileEntryService
 
             await _blobService.CommitBlockListAsync(fileEntry.FileName, BlobContainerName, blockIds);
 
-            await _fileEntryRepository.MarkUploadComplete(fileId, fileEntry.FileUrl);
+            DateTimeOffset expiryTime = DateTimeOffset.UtcNow.AddMinutes(30);
+            string fileUrl = await _blobService.GenerateSasTokenAsync(fileEntry.FileName, BlobContainerName, expiryTime);
 
-            await _fileEntryRepository.UnlockFile(fileId);
+            await _fileEntryRepository.MarkUploadComplete(fileId, fileUrl);
 
             return new UploadResponseDto
             {
@@ -168,94 +241,6 @@ public class FileEntryService : IFileEntryService
             Message = chunkUploadResponse.Message,
             FileId = fileId
         };
-    }
-
-    public virtual async Task<UploadResponseDto> UploadChunk(string fileId, string fileName, int chunkIndex, IFormFile chunkFile, string chunkHash)
-    {
-        try
-        {
-
-            ValidateString(fileName, nameof(fileName));
-            ValidateString(fileId, nameof(fileId));
-            ValidateString(chunkHash, nameof(chunkHash));
-            ValidateNonNegativeNumber(chunkIndex, nameof(chunkIndex));
-            ValidateChunkFile(chunkFile, nameof(chunkFile));
-
-            await _fileEntryRepository.LockFile(fileId);
-
-            var existingChunk = await _chunkRepository.FindChunkByFileIdAndChunkIndex(fileId, chunkIndex);
-            if (existingChunk != null)
-            {
-                return new UploadResponseDto
-                {
-                    Status = UploadResponseDtoStatus.SKIPPED,
-                    Message = "Chunk already recorded in database"
-                };
-            }
-
-            string blockId = Convert.ToBase64String(Encoding.UTF8.GetBytes(chunkIndex.ToString("D6")));
-
-            bool blockExists = await _blobService.BlockExistsAsync(fileName, BlobContainerName, blockId);
-
-            if (!blockExists)
-            {
-                await _blobService.UploadChunkBlockAsync(chunkFile, fileName, BlobContainerName, blockId);
-            }
-
-            var chunk = new Chunk
-            {
-                FileId = fileId,
-                ChunkIndex = chunkIndex,
-                ChunkHash = chunkHash,
-            };
-
-            var savedChunk = await _chunkRepository.SaveChunk(chunk);
-
-            return new UploadResponseDto
-            {
-                Status = UploadResponseDtoStatus.SUCCESS,
-                UploadedChunk = savedChunk.ChunkIndex
-            };
-        }
-        catch
-        {
-            throw;
-        }
-        finally
-        {
-            await _fileEntryRepository.UnlockFile(fileId);
-        }
-    }
-
-
-    public virtual async Task<FileEntry> CreateFileEntry(string fileName, string fileHash, long fileSize, int totalChunks)
-    {
-        if (string.IsNullOrWhiteSpace(fileName))
-            throw new ArgumentException("File Name must be provided.", nameof(fileName));
-
-        if (string.IsNullOrWhiteSpace(fileHash))
-            throw new ArgumentException("File Hash must be provided.", nameof(fileHash));
-
-        if (totalChunks <= 0)
-            throw new ArgumentException("Total Chunks must be greater than zero.", nameof(totalChunks));
-
-        if (fileSize <= 0)
-            throw new ArgumentException("File Size must be greater than zero.", nameof(fileSize));
-
-        string fileUrl = await _blobService.GenerateSasTokenAsync(fileName, BlobContainerName, default!);
-
-        var fileEntry = new FileEntry
-        {
-            FileName = fileName,
-            FileHash = fileHash,
-            FileSize = fileSize,
-            TotalChunks = totalChunks,
-            FileUrl = fileUrl,
-        };
-
-        var createdFileEntry = await _fileEntryRepository.CreateFileEntry(fileEntry);
-
-        return createdFileEntry;
     }
 
     private static void ValidateString(string? value, string name, string message = "must be provided.")

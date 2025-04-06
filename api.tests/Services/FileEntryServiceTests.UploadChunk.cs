@@ -56,7 +56,6 @@ public partial class FileEntryServiceTests
 
         _fileEntryRepository.Verify(repo => repo.LockFile(fileEntry.Id), Times.Once);
         _chunkRepository.Verify(repo => repo.FindChunkByFileIdAndChunkIndex(fileEntry.Id, chunk.ChunkIndex), Times.Once);
-        _blobService.Verify(blob => blob.BlockExistsAsync(It.IsAny<string>(), _storageOptions.Value.ContainerName, chunk.BlockId), Times.Once);
         _blobService.Verify(blob => blob.UploadChunkBlockAsync(chunkFile, It.IsAny<string>(), _storageOptions.Value.ContainerName, chunk.BlockId), Times.Once);
         _chunkRepository.Verify(repo => repo.SaveChunk(It.IsAny<Chunk>()), Times.Once);
         _fileEntryRepository.Verify(repo => repo.UnlockFile(fileEntry.Id), Times.AtLeastOnce);
@@ -101,54 +100,6 @@ public partial class FileEntryServiceTests
         _blobService.Verify(blob => blob.BlockExistsAsync(It.IsAny<string>(), _storageOptions.Value.ContainerName, chunk.BlockId), Times.Never);
         _blobService.Verify(blob => blob.UploadChunkBlockAsync(chunkFile, It.IsAny<string>(), _storageOptions.Value.ContainerName, chunk.BlockId), Times.Never);
         _chunkRepository.Verify(repo => repo.SaveChunk(It.IsAny<Chunk>()), Times.Never);
-        _fileEntryRepository.Verify(repo => repo.UnlockFile(fileEntry.Id), Times.AtLeastOnce);
-    }
-
-    [Fact]
-    public async Task UploadChunk_ShouldSkipUpload_WhenChunkExistsInBlobStorageButNotDatabase()
-    {
-        Chunk chunk = new ChunkBuilder().Build();
-        FileEntry fileEntry = new FileEntryBuilder().WithLockState(false).Build();
-
-        var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("Dummy content"));
-        IFormFile chunkFile = new FormFile(stream, 0, stream.Length, "file", chunk.ChunkHash);
-
-        _fileEntryRepository.Setup(repo => repo.LockFile(fileEntry.Id))
-                            .Callback(() =>
-                            {
-                                fileEntry.IsLocked = true;
-                                fileEntry.LockedAt = DateTime.UtcNow;
-                            });
-
-        _chunkRepository.Setup(repo => repo.FindChunkByFileIdAndChunkIndex(fileEntry.Id, chunk.ChunkIndex))
-                        .ReturnsAsync((Chunk)null!);
-
-        _blobService.Setup(x => x.BlockExistsAsync(It.IsAny<string>(), _storageOptions.Value.ContainerName, chunk.BlockId))
-                    .ReturnsAsync(Response.FromValue(true, Mock.Of<Response>()));
-
-        _chunkRepository.Setup(repo => repo.SaveChunk(It.IsAny<Chunk>()))
-            .ReturnsAsync(chunk);
-
-        _fileEntryRepository.Setup(repo => repo.UnlockFile(fileEntry.Id))
-            .Callback(() =>
-            {
-                fileEntry.IsLocked = false;
-                fileEntry.LockedAt = null;
-            });
-
-        var result = await _fileEntryService.UploadChunk(fileEntry.Id, fileEntry.FileName, chunk.ChunkIndex, chunkFile, chunk.ChunkHash);
-
-        Assert.NotNull(result);
-        Assert.Equal(UploadResponseDtoStatus.SUCCESS, result.Status);
-
-        Assert.False(fileEntry.IsLocked);
-        Assert.Null(fileEntry.LockedAt);
-
-        _fileEntryRepository.Verify(repo => repo.LockFile(fileEntry.Id), Times.Once);
-        _chunkRepository.Verify(repo => repo.FindChunkByFileIdAndChunkIndex(fileEntry.Id, chunk.ChunkIndex), Times.Once);
-        _blobService.Verify(blob => blob.BlockExistsAsync(It.IsAny<string>(), _storageOptions.Value.ContainerName, chunk.BlockId), Times.Once);
-        _blobService.Verify(blob => blob.UploadChunkBlockAsync(chunkFile, It.IsAny<string>(), _storageOptions.Value.ContainerName, chunk.BlockId), Times.Never);
-        _chunkRepository.Verify(repo => repo.SaveChunk(It.IsAny<Chunk>()), Times.Once);
         _fileEntryRepository.Verify(repo => repo.UnlockFile(fileEntry.Id), Times.AtLeastOnce);
     }
 

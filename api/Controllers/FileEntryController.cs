@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace api.Controllers;
 
-[Route("[controller]")]
+[Route("file-entry")]
 [ApiController]
 public class FileEntryController : ControllerBase
 {
@@ -57,10 +57,27 @@ public class FileEntryController : ControllerBase
             _logger.LogWarning(ex, ex.Message);
             return BadRequest(new ErrorApiResponse<object>(ex.Message));
         }
+        catch (Azure.RequestFailedException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return BadRequest(new ErrorApiResponse<object>(ExtractAzureErrorMessage(ex)));
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, ex.Message);
             return BadRequest(new ErrorApiResponse<object>(ex.Message));
         }
     }
+
+    private string ExtractAzureErrorMessage(Azure.RequestFailedException ex)
+    {
+        return ex.ErrorCode switch
+        {
+            "BlobNotFound" => "The specified blob does not exist.",
+            "AuthorizationPermissionMismatch" => "You don't have permission to upload this file.",
+            "ContainerNotFound" => "The specified blob container does not exist.",
+            _ => "An unexpected Azure storage error occurred."
+        };
+    }
+
 }

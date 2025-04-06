@@ -11,9 +11,9 @@ public partial class FileEntryServiceTests
     public async Task CreateFileEntry_ShouldCreateFileEntrySuccessfully_AndReturnValidId() {
         FileEntry fileEntry = new FileEntryBuilder().WithFileSize(1024).WithTotalChunks(4).Build();
 
-        _blobService
-                .Setup(x => x.GenerateSasTokenAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>()))
-                .ReturnsAsync(It.IsAny<string>());
+        // _blobService
+        //         .Setup(x => x.GenerateSasTokenAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>()))
+        //         .ReturnsAsync(It.IsAny<string>());
 
         _fileEntryRepository
                 .Setup(repo => repo.CreateFileEntry(It.IsAny<FileEntry>()))
@@ -25,31 +25,31 @@ public partial class FileEntryServiceTests
         Assert.NotNull(createdFileEntry);
         Assert.True(fileEntry.PropertiesAreEqual(createdFileEntry));
 
-        _blobService.Verify(service => service.GenerateSasTokenAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>()), Times.Once);
+        // _blobService.Verify(service => service.GenerateSasTokenAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>()), Times.Once);
         _fileEntryRepository.Verify(repo => repo.CreateFileEntry(It.IsAny<FileEntry>()), Times.Once);
     }
 
-    [Fact]
-    public async Task CreateFileEntry_ShouldGenerateAndStoreSasUrlForNewFileEntry() {
-        FileEntry fileEntry = new FileEntryBuilder().WithFileSize(1024).WithTotalChunks(4).Build();
+//     [Fact]
+//     public async Task CreateFileEntry_ShouldGenerateAndStoreSasUrlForNewFileEntry() {
+//         FileEntry fileEntry = new FileEntryBuilder().WithFileSize(1024).WithTotalChunks(4).Build();
 
-        _blobService
-                .Setup(x => x.GenerateSasTokenAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>()))
-                .ReturnsAsync(fileEntry.FileUrl!);
+//         _blobService
+//                 .Setup(x => x.GenerateSasTokenAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>()))
+//                 .ReturnsAsync(fileEntry.FileUrl!);
 
-        _fileEntryRepository
-                .Setup(repo => repo.CreateFileEntry(It.IsAny<FileEntry>()))
-                .ReturnsAsync(fileEntry);
+//         _fileEntryRepository
+//                 .Setup(repo => repo.CreateFileEntry(It.IsAny<FileEntry>()))
+//                 .ReturnsAsync(fileEntry);
 
 
-        FileEntry createdFileEntry = await _fileEntryService.CreateFileEntry(fileEntry.FileName, fileEntry.FileHash, fileEntry.FileSize, fileEntry.TotalChunks);
+//         FileEntry createdFileEntry = await _fileEntryService.CreateFileEntry(fileEntry.FileName, fileEntry.FileHash, fileEntry.FileSize, fileEntry.TotalChunks);
 
-        Assert.NotNull(createdFileEntry);
-        Assert.Equal(fileEntry.FileUrl, createdFileEntry.FileUrl);
+//         Assert.NotNull(createdFileEntry);
+//         Assert.Equal(fileEntry.FileUrl, createdFileEntry.FileUrl);
 
-        _blobService.Verify(service => service.GenerateSasTokenAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>()), Times.Once);
-        _fileEntryRepository.Verify(repo => repo.CreateFileEntry(It.IsAny<FileEntry>()), Times.Once);
-    }
+//         _blobService.Verify(service => service.GenerateSasTokenAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTimeOffset>()), Times.Once);
+//         _fileEntryRepository.Verify(repo => repo.CreateFileEntry(It.IsAny<FileEntry>()), Times.Once);
+//     }
 
     [Theory]
     [InlineData("", "file-hash", 1024, 5)]

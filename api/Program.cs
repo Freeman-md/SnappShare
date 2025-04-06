@@ -10,6 +10,8 @@ using api.Interfaces.Repositories;
 using api.Repositories;
 using api.Configs;
 using Microsoft.Extensions.Options;
+using api.Tests.Interfaces.Services;
+using System.Text.Json.Serialization;
 
 Env.Load();
 
@@ -38,7 +40,12 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: MyAllowSpecificOrigins,
                       policy =>
                       {
-                          policy.WithOrigins(["http://localhost:3000", "https://snappshare.vercel.app"])
+                          policy.WithOrigins([
+                            "http://localhost:3000", 
+                            "https://snappshare.vercel.app", 
+                            "https://77e21a22-11e6-4ffc-8fd7-3066161c4a7c.lovableproject.com",
+                            "https://32b87998-ed2e-46ad-9f2a-4dfb5c5fea07.lovableproject.com"
+                            ])
                                 .AllowAnyMethod()  
                                 .AllowAnyHeader()  
                                 .AllowCredentials();
@@ -47,6 +54,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddSingleton<IBlobService, BlobService>();
 builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<IFileEntryService, FileEntryService>();
 builder.Services.AddScoped<IFileRepository, FileRepository>();
 builder.Services.AddScoped<IFileEntryRepository, FileEntryRepository>();
 builder.Services.AddScoped<IChunkRepository, ChunkRepository>();
@@ -62,7 +70,7 @@ if (!Directory.Exists(dbFolderPath))
 
 builder.Services.AddDbContext<SnappshareContext>(options =>
 {
-    options.UseSqlite($"Data Source={dbPath}");
+    options.UseSqlite($"Data Source=snappshare.db");
 });
 
 
@@ -71,7 +79,9 @@ builder.Services.AddControllers(
     {
         options.ModelMetadataDetailsProviders.Add(new SystemTextJsonValidationMetadataProvider());
     }
-);
+).AddJsonOptions(options => {
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
