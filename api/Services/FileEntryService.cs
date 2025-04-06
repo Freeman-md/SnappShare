@@ -58,7 +58,8 @@ public class FileEntryService : IFileEntryService
             {
                 Status = UploadResponseDtoStatus.COMPLETE,
                 FileId = fileEntry.Id,
-                FileUrl = fileEntry.FileUrl
+                FileUrl = fileEntry.FileUrl,
+                Message = "File Uploaded Successfully"
             };
         }
 
@@ -66,7 +67,8 @@ public class FileEntryService : IFileEntryService
         {
             Status = UploadResponseDtoStatus.PARTIAL,
             FileId = fileEntry.Id,
-            UploadedChunks = uploadedIndexes
+            UploadedChunks = uploadedIndexes,
+            TotalChunks = fileEntry.TotalChunks
         };
     }
 
@@ -94,7 +96,6 @@ public class FileEntryService : IFileEntryService
     {
         try
         {
-
             ValidateString(fileName, nameof(fileName));
             ValidateString(fileId, nameof(fileId));
             ValidateString(chunkHash, nameof(chunkHash));
@@ -218,11 +219,15 @@ public class FileEntryService : IFileEntryService
         ValidateChunkFile(chunkFile, nameof(chunkFile));
 
         string fileId;
-        var fileUploadStatus = await CheckFileUploadStatus(fileHash);
+        var fileUploadResponse = await CheckFileUploadStatus(fileHash);
 
-        fileId = fileUploadStatus.Status == UploadResponseDtoStatus.NEW
+        if (fileUploadResponse.Status == UploadResponseDtoStatus.COMPLETE) return fileUploadResponse;
+
+        if (fileUploadResponse.TotalChunks.HasValue && (fileUploadResponse.TotalChunks.Value != totalChunks)) throw new Exception("Total chunks is invalid for existing file.");
+
+        fileId = fileUploadResponse.Status == UploadResponseDtoStatus.NEW
             ? (await CreateFileEntry(fileName, fileHash, fileSize, totalChunks)).Id
-            : fileUploadStatus.FileId!;
+            : fileUploadResponse.FileId!;
 
         var chunkUploadResponse = await UploadChunk(fileId, fileName, chunkIndex, chunkFile, chunkHash);
 

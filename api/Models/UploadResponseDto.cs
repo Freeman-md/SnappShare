@@ -20,6 +20,7 @@ public class UploadResponseDto
     public List<int>? UploadedChunks { get; set; }
 
     public int? UploadedChunk { get; set; }
+    public int? TotalChunks { get; set; }
     
     public string? Message { get; set; }
 }

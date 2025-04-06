@@ -44,7 +44,8 @@ builder.Services.AddCors(options =>
                             "http://localhost:3000", 
                             "https://snappshare.vercel.app", 
                             "https://77e21a22-11e6-4ffc-8fd7-3066161c4a7c.lovableproject.com",
-                            "https://32b87998-ed2e-46ad-9f2a-4dfb5c5fea07.lovableproject.com"
+                            "https://32b87998-ed2e-46ad-9f2a-4dfb5c5fea07.lovableproject.com",
+                            "https://id-preview--32b87998-ed2e-46ad-9f2a-4dfb5c5fea07.lovable.app"
                             ])
                                 .AllowAnyMethod()  
                                 .AllowAnyHeader()  
@@ -70,7 +71,7 @@ if (!Directory.Exists(dbFolderPath))
 
 builder.Services.AddDbContext<SnappshareContext>(options =>
 {
-    options.UseSqlite($"Data Source=snappshare.db");
+    options.UseSqlite($"Data Source={dbPath}");
 });
 
 

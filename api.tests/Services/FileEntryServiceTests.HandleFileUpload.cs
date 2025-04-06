@@ -159,5 +159,8 @@ public partial class FileEntryServiceTests
             await _fileEntryService.HandleFileUpload(fileEntry.FileName, fileEntry.FileHash, fileEntry.FileSize, 0, fileEntry.TotalChunks, emptyFile, "chunkhash"));
     }
 
+    //TODO: ✅ Add test to verify that if uploaded chunk count != totalChunks, an error is thrown before anything is processed after checking file upload status.
+    //TODO: ✅ Add test to ensure no further methods are called if upload status is already COMPLETE after checking file upload status
+
 
 }
