@@ -73,7 +73,7 @@ if (!Directory.Exists(dbFolderPath))
 
 builder.Services.AddDbContext<SnappshareContext>(options =>
 {
-    options.UseSqlite($"Data Source=snappshare.db");
+    options.UseSqlite($"Data Source={dbPath}");
 });
 
 
