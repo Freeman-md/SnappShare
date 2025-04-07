@@ -159,8 +159,42 @@ public partial class FileEntryServiceTests
             await _fileEntryService.HandleFileUpload(fileEntry.FileName, fileEntry.FileHash, fileEntry.FileSize, 0, fileEntry.TotalChunks, emptyFile, "chunkhash"));
     }
 
-    //TODO: ✅ Add test to verify that if uploaded chunk count != totalChunks, an error is thrown before anything is processed after checking file upload status.
-    //TODO: ✅ Add test to ensure no further methods are called if upload status is already COMPLETE after checking file upload status
+    [Fact]
+    public async Task HandleFileUpload_ShouldReturnCompletedStatus_WhenFileHasBeenUploadedCompletely()
+    {
+        var (fileEntry, chunk, chunkFile) = SetupFileEntryChunkAndForm();
+
+        _fileEntryServiceMock.Setup(s => s.CheckFileUploadStatus(fileEntry.FileHash))
+            .ReturnsAsync(new UploadResponseDto { Status = UploadResponseDtoStatus.COMPLETE, FileId = fileEntry.Id });
+
+        var response = await _fileEntryService.HandleFileUpload(fileEntry.FileName, fileEntry.FileHash, fileEntry.FileSize, chunk.ChunkIndex, fileEntry.TotalChunks, chunkFile, chunk.ChunkHash);
+
+        Assert.Equal(UploadResponseDtoStatus.COMPLETE, response.Status);
+        _fileEntryServiceMock.Verify(service => service.CheckFileUploadStatus(fileEntry.FileHash), Times.Once);
+        _fileEntryServiceMock.Verify(service => service.CreateFileEntry(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<long>(), It.IsAny<int>()), Times.Never);
+        _fileEntryServiceMock.Verify(service => service.UploadChunk(fileEntry.Id, fileEntry.FileName, chunk.ChunkIndex, chunkFile, chunk.ChunkHash), Times.Never);
+        _chunkRepository.Verify(repo => repo.GetUploadedChunksByFileId(fileEntry.Id), Times.Never);
+        _fileEntryServiceMock.Verify(service => service.FinalizeUpload(fileEntry.Id), Times.Never);
+    }
+
+    [Fact]
+    public async Task HandleFileUpload_ShouldThrow_WhenTotalChunksMismatchInPartialUpload()
+    {
+        const int ORIGINAL_TOTAL_CHUNKS = 5;
+        const int NEW_TOTAL_CHUNKS = 9;
+        var (fileEntry, chunk, chunkFile) = SetupFileEntryChunkAndForm();
+        fileEntry.TotalChunks = ORIGINAL_TOTAL_CHUNKS;
+
+        _fileEntryServiceMock.Setup(s => s.CheckFileUploadStatus(fileEntry.FileHash))
+            .ReturnsAsync(new UploadResponseDto { Status = UploadResponseDtoStatus.PARTIAL, FileId = fileEntry.Id, TotalChunks = fileEntry.TotalChunks });
+
+        await Assert.ThrowsAsync<Exception>(async () => await _fileEntryService.HandleFileUpload(fileEntry.FileName, fileEntry.FileHash, fileEntry.FileSize, chunk.ChunkIndex, NEW_TOTAL_CHUNKS, chunkFile, chunk.ChunkHash));
+        _fileEntryServiceMock.Verify(service => service.CheckFileUploadStatus(fileEntry.FileHash), Times.Once);
+        _fileEntryServiceMock.Verify(service => service.CreateFileEntry(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<long>(), It.IsAny<int>()), Times.Never);
+        _fileEntryServiceMock.Verify(service => service.UploadChunk(fileEntry.Id, fileEntry.FileName, chunk.ChunkIndex, chunkFile, chunk.ChunkHash), Times.Never);
+        _chunkRepository.Verify(repo => repo.GetUploadedChunksByFileId(fileEntry.Id), Times.Never);
+        _fileEntryServiceMock.Verify(service => service.FinalizeUpload(fileEntry.Id), Times.Never);
+    }
 
 
 }
