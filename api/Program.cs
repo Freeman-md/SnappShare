@@ -47,6 +47,7 @@ builder.Services.AddCors(options =>
                             "https://32b87998-ed2e-46ad-9f2a-4dfb5c5fea07.lovableproject.com",
                             "https://id-preview--32b87998-ed2e-46ad-9f2a-4dfb5c5fea07.lovable.app",
                             "https://preview--chunked-file-uploader.lovable.app",
+                            "https://chunked-file-uploader.vercel.app",
                             ])
                                 .AllowAnyMethod()  
                                 .AllowAnyHeader()  
@@ -72,7 +73,7 @@ if (!Directory.Exists(dbFolderPath))
 
 builder.Services.AddDbContext<SnappshareContext>(options =>
 {
-    options.UseSqlite($"Data Source={dbPath}");
+    options.UseSqlite($"Data Source=snappshare.db");
 });
 
 
