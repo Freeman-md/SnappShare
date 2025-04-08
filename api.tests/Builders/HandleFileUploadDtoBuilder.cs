@@ -1,5 +1,6 @@
 using System.IO;
 using api.DTOs;
+using api.Enums;
 using Microsoft.AspNetCore.Http;
 
 namespace api.tests.Builders;
@@ -13,6 +14,7 @@ public class HandleFileUploadDtoBuilder
     private int _totalChunks = 2;
     private IFormFile _chunkFile;
     private string _chunkHash = "valid-chunk-hash";
+    private ExpiryDuration _expiresIn = ExpiryDuration.OneDay;
 
     public HandleFileUploadDtoBuilder()
     {
@@ -63,6 +65,12 @@ public class HandleFileUploadDtoBuilder
         return this;
     }
 
+    public HandleFileUploadDtoBuilder WithExpiryDuration(ExpiryDuration expiresIn)
+    {
+        _expiresIn = expiresIn;
+        return this;
+    }
+
     public HandleFileUploadDto Build()
     {
         return new HandleFileUploadDto
@@ -73,7 +81,8 @@ public class HandleFileUploadDtoBuilder
             ChunkIndex = _chunkIndex,
             TotalChunks = _totalChunks,
             ChunkFile = _chunkFile,
-            ChunkHash = _chunkHash
+            ChunkHash = _chunkHash,
+            ExpiresIn = _expiresIn
         };
     }
 }

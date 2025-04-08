@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
+using api.Enums;
 
 namespace api.Models;
 
@@ -49,7 +51,10 @@ public class FileEntry {
     public DateTime CreatedAt { get; set; }  = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; }  = DateTime.UtcNow;
     public DateTime? LockedAt { get; set; }
-    public DateTime? ExpiresAt { get; set; }  
+    
+    [Required(ErrorMessage = "Please indicate when the file is due to expire")]
+    [EnumDataType(typeof(ExpiryDuration))]
+    public ExpiryDuration ExpiresIn { get; set; }  
 
     public ICollection<Chunk> Chunks { get; set; } = new List<Chunk>();
 

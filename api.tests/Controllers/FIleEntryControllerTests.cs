@@ -1,5 +1,6 @@
 using System;
 using api.Controllers;
+using api.Enums;
 using api.Models;
 using api.Models.DTOs;
 using api.Services;
@@ -33,7 +34,7 @@ public class FileEntryControllerTests
         var expectedResponse = new UploadResponseDto { Status = UploadResponseDtoStatus.SUCCESS };
 
         _fileEntryService.Setup(s => s.HandleFileUpload(
-            dto.FileName, dto.FileHash, dto.FileSize, dto.ChunkIndex, dto.TotalChunks, dto.ChunkFile, dto.ChunkHash))
+            dto.FileName, dto.FileHash, dto.FileSize, dto.ChunkIndex, dto.TotalChunks, dto.ChunkFile, dto.ChunkHash, dto.ExpiresIn))
             .ReturnsAsync(expectedResponse);
 
         var result = await _fileEntryController.HandleFileUpload(dto);
@@ -50,7 +51,7 @@ public class FileEntryControllerTests
         var expectedResponse = new UploadResponseDto { Status = UploadResponseDtoStatus.COMPLETE };
 
         _fileEntryService.Setup(s => s.HandleFileUpload(
-            dto.FileName, dto.FileHash, dto.FileSize, dto.ChunkIndex, dto.TotalChunks, dto.ChunkFile, dto.ChunkHash))
+            dto.FileName, dto.FileHash, dto.FileSize, dto.ChunkIndex, dto.TotalChunks, dto.ChunkFile, dto.ChunkHash, dto.ExpiresIn))
             .ReturnsAsync(expectedResponse);
 
         var result = await _fileEntryController.HandleFileUpload(dto);
@@ -67,7 +68,7 @@ public class FileEntryControllerTests
         var expectedResponse = new UploadResponseDto { Status = UploadResponseDtoStatus.SKIPPED };
 
         _fileEntryService.Setup(s => s.HandleFileUpload(
-            dto.FileName, dto.FileHash, dto.FileSize, dto.ChunkIndex, dto.TotalChunks, dto.ChunkFile, dto.ChunkHash))
+            dto.FileName, dto.FileHash, dto.FileSize, dto.ChunkIndex, dto.TotalChunks, dto.ChunkFile, dto.ChunkHash, dto.ExpiresIn))
             .ReturnsAsync(expectedResponse);
 
         var result = await _fileEntryController.HandleFileUpload(dto);
@@ -83,7 +84,7 @@ public class FileEntryControllerTests
         var dto = new HandleFileUploadDtoBuilder().Build();
 
         _fileEntryService.Setup(s => s.HandleFileUpload(
-            dto.FileName, dto.FileHash, dto.FileSize, dto.ChunkIndex, dto.TotalChunks, dto.ChunkFile, dto.ChunkHash))
+            dto.FileName, dto.FileHash, dto.FileSize, dto.ChunkIndex, dto.TotalChunks, dto.ChunkFile, dto.ChunkHash, dto.ExpiresIn))
             .ThrowsAsync(new ArgumentException("Invalid parameters"));
 
         var result = await _fileEntryController.HandleFileUpload(dto);
@@ -99,7 +100,7 @@ public class FileEntryControllerTests
         var dto = new HandleFileUploadDtoBuilder().Build();
 
         _fileEntryService.Setup(s => s.HandleFileUpload(
-            dto.FileName, dto.FileHash, dto.FileSize, dto.ChunkIndex, dto.TotalChunks, dto.ChunkFile, dto.ChunkHash))
+            dto.FileName, dto.FileHash, dto.FileSize, dto.ChunkIndex, dto.TotalChunks, dto.ChunkFile, dto.ChunkHash, dto.ExpiresIn))
             .ThrowsAsync(new Exception("Unexpected"));
 
         var result = await _fileEntryController.HandleFileUpload(dto);
@@ -129,7 +130,8 @@ public async Task HandleFileUpload_ShouldReturnBadRequest_WhenModelStateIsInvali
         It.IsAny<int>(),
         It.IsAny<int>(),
         It.IsAny<IFormFile>(),
-        It.IsAny<string>()
+        It.IsAny<string>(),
+        It.IsAny<ExpiryDuration>()
     ), Times.Never);
 }
 

@@ -1,6 +1,7 @@
 using System;
 using System.Text;
 using api.Configs;
+using api.Enums;
 using api.Interfaces.Repositories;
 using api.Interfaces.Services;
 using api.Models;
@@ -72,12 +73,13 @@ public class FileEntryService : IFileEntryService
         };
     }
 
-    public virtual async Task<FileEntry> CreateFileEntry(string fileName, string fileHash, long fileSize, int totalChunks)
+    public virtual async Task<FileEntry> CreateFileEntry(string fileName, string fileHash, long fileSize, int totalChunks, ExpiryDuration expiresIn)
     {
         ValidateString(fileName, nameof(fileName));
         ValidateString(fileHash, nameof(fileHash));
         ValidatePositiveNumber(totalChunks, nameof(totalChunks));
         ValidatePositiveNumber(fileSize, nameof(fileSize));
+        ValidateExpiryDuration(expiresIn, nameof(expiresIn));
 
         var fileEntry = new FileEntry
         {
@@ -85,6 +87,7 @@ public class FileEntryService : IFileEntryService
             FileHash = fileHash,
             FileSize = fileSize,
             TotalChunks = totalChunks,
+            ExpiresIn = expiresIn,
         };
 
         var createdFileEntry = await _fileEntryRepository.CreateFileEntry(fileEntry);
@@ -208,7 +211,10 @@ public class FileEntryService : IFileEntryService
         }
     }
 
-    public async Task<UploadResponseDto> HandleFileUpload(string fileName, string fileHash, long fileSize, int chunkIndex, int totalChunks, IFormFile chunkFile, string chunkHash)
+    //TODO: Implementing Background Upload - there should be a way to provide a URL to the user in the first instance once upload starts. More like a
+    // temp url to check upload process. I reckon that will the fileId with a route handling that request so the user can check upload status
+
+    public async Task<UploadResponseDto> HandleFileUpload(string fileName, string fileHash, long fileSize, int chunkIndex, int totalChunks, IFormFile chunkFile, string chunkHash, ExpiryDuration expiresIn)
     {
         ValidateString(fileName, nameof(fileName));
         ValidateString(fileHash, nameof(fileHash));
@@ -217,6 +223,7 @@ public class FileEntryService : IFileEntryService
         ValidatePositiveNumber(totalChunks, nameof(totalChunks));
         ValidatePositiveNumber(fileSize, nameof(fileSize));
         ValidateChunkFile(chunkFile, nameof(chunkFile));
+        ValidateExpiryDuration(expiresIn, nameof(expiresIn));
 
         string fileId;
         var fileUploadResponse = await CheckFileUploadStatus(fileHash);
@@ -226,7 +233,7 @@ public class FileEntryService : IFileEntryService
         if (fileUploadResponse.TotalChunks.HasValue && (fileUploadResponse.TotalChunks.Value != totalChunks)) throw new Exception("Total chunks is invalid for existing file.");
 
         fileId = fileUploadResponse.Status == UploadResponseDtoStatus.NEW
-            ? (await CreateFileEntry(fileName, fileHash, fileSize, totalChunks)).Id
+            ? (await CreateFileEntry(fileName, fileHash, fileSize, totalChunks, expiresIn)).Id
             : fileUploadResponse.FileId!;
 
         var chunkUploadResponse = await UploadChunk(fileId, fileName, chunkIndex, chunkFile, chunkHash);
@@ -270,6 +277,12 @@ public class FileEntryService : IFileEntryService
     {
         if (file == null || file.Length <= 0)
             throw new ArgumentException("Chunk file must not be null or empty.", name);
+    }
+
+    private static void ValidateExpiryDuration(ExpiryDuration value, string name) {
+        if (!Enum.IsDefined(typeof(ExpiryDuration), value)) {
+            throw new ArgumentOutOfRangeException(name, $"Invalid expiry duration: {value}");
+        }
     }
 
 }

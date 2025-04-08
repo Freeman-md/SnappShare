@@ -47,7 +47,8 @@ public class FileEntryController : ControllerBase
                                 dto.ChunkIndex,
                                 dto.TotalChunks,
                                 dto.ChunkFile,
-                                dto.ChunkHash
+                                dto.ChunkHash,
+                                dto.ExpiresIn
                             );
 
             return Ok(result);

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using api.Enums;
 using api.Models;
 
 namespace api.tests.Builders;
@@ -21,7 +22,8 @@ public class FileEntryBuilder
             IsLocked = false,
             Chunks = new List<Chunk>(),
             FileHash = Guid.NewGuid().ToString("N"),
-            FileUrl = "http://snappshare.com/default.txt"
+            FileUrl = "http://snappshare.com/default.txt",
+            ExpiresIn = ExpiryDuration.ThirtyMinutes
         };
     }
 
@@ -109,9 +111,9 @@ public class FileEntryBuilder
         return this;
     }
 
-    public FileEntryBuilder WithExpiration(DateTime expiresAt)
+    public FileEntryBuilder WithExpiration(ExpiryDuration ExpiresIn)
     {
-        _fileEntry.ExpiresAt = expiresAt;
+        _fileEntry.ExpiresIn = ExpiresIn;
         return this;
     }
 
@@ -131,7 +133,7 @@ public class FileEntryBuilder
             CreatedAt = _fileEntry.CreatedAt,
             UpdatedAt = _fileEntry.UpdatedAt,
             LockedAt = _fileEntry.LockedAt,
-            ExpiresAt = _fileEntry.ExpiresAt,
+            ExpiresIn = _fileEntry.ExpiresIn,
             Chunks = _fileEntry.Chunks
         };
     }
@@ -148,7 +150,7 @@ public class FileEntryBuilder
                 .WithFileSize(1024 * i)
                 .WithFileHash(Guid.NewGuid().ToString("N"))
                 .WithStatus(FileEntryStatus.Pending)
-                .WithExpiration(DateTime.UtcNow.AddHours(1))
+                .WithExpiration(ExpiryDuration.FiveMinutes)
                 .Build();
         }
     }

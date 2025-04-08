@@ -25,19 +25,22 @@ public class FileEntryTests
     }
 
     [Theory]
-    [InlineData(null, "txt", 5, "hash", "http://file.com/test", FileEntryStatus.Pending)]     // Missing file name
-    [InlineData("", "txt", 5, "hash", "http://file.com/test", FileEntryStatus.Pending)]       // Empty file name
-    [InlineData("Test", "txt", -1, "hash", "http://file.com/test", FileEntryStatus.Pending)]  // Negative chunk count
-    [InlineData("Test", "txt", 5, null, "http://file.com/test", FileEntryStatus.Pending)]     // Missing hash
-    [InlineData("Test", "txt", 5, "", "http://file.com/test", FileEntryStatus.Pending)]       // Empty hash
-    [InlineData("Test", "txt", 5, "hash", "http://file.com/test", (FileEntryStatus)99)]       // Invalid status
+    [InlineData(null, "txt", 5, "hash", "http://file.com/test", FileEntryStatus.Pending, ExpiryDuration.OneDay)]     // Missing file name
+    [InlineData("", "txt", 5, "hash", "http://file.com/test", FileEntryStatus.Pending, ExpiryDuration.OneDay)]       // Empty file name
+    [InlineData("Test", "txt", -1, "hash", "http://file.com/test", FileEntryStatus.Pending, ExpiryDuration.OneDay)]  // Negative chunk count
+    [InlineData("Test", "txt", 5, null, "http://file.com/test", FileEntryStatus.Pending, ExpiryDuration.OneDay)]     // Missing hash
+    [InlineData("Test", "txt", 5, "", "http://file.com/test", FileEntryStatus.Pending, ExpiryDuration.OneDay)]       // Empty hash
+    [InlineData("Test", "txt", 5, "hash", "http://file.com/test", (FileEntryStatus)99, ExpiryDuration.OneDay)]       // Invalid status
+    [InlineData("Test", "txt", 5, "hash", "http://file.com/test", FileEntryStatus.Pending, (ExpiryDuration)(-1))]       // Invalid expiresIn (Expiry Duration)
     public void TestInvalidFileEntry_ShouldFailValidation(
         string? fileName,
         string? fileExtension,
         int totalChunks,
         string? fileHash,
         string? fileUrl,
-        FileEntryStatus status)
+        FileEntryStatus status,
+        ExpiryDuration expiresIn
+        )
     {
         var fileEntry = new FileEntryBuilder()
                             .WithFileName(fileName ?? "")
@@ -46,12 +49,13 @@ public class FileEntryTests
                             .WithFileHash(fileHash ?? "")
                             .WithFileUrl(fileUrl ?? "")
                             .WithStatus(status)
-                            .WithExpiration(DateTime.UtcNow.AddHours(1))
+                            .WithExpiration(ExpiryDuration.FiveMinutes)
                             .WithFileSize(1024)
                             .WithUpdatedAt(DateTime.UtcNow)
                             .WithCreatedAt(DateTime.UtcNow)
                             .WithId(Guid.NewGuid().ToString("N")[..12])
                             .WithLockState(false)
+                            .WithExpiration(expiresIn)
                             .Build();
 
         ValidationContext context = new(fileEntry);
