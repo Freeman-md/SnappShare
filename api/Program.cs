@@ -19,8 +19,11 @@ Env.Load();
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<StorageOptions>(builder.Configuration.GetSection(StorageOptions.Key));
+builder.Services.Configure<ServiceBusOptions>(builder.Configuration.GetSection(ServiceBusOptions.Key));
 
-builder.Services.AddAzureServices(builder.Configuration);
+builder.Services
+            .AddBlobStorage(builder.Configuration)
+            .AddServiceBus(builder.Configuration);
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
