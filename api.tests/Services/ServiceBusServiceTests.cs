@@ -12,18 +12,12 @@ public partial class ServiceBusServiceTests
 {
     private readonly Mock<ServiceBusClient> _serviceBusClient;
     private readonly Mock<ServiceBusSender> _serviceBusSender;
-    private readonly Mock<IConfiguration> _configuration;
-
-    private readonly Mock<IConfigurationSection> _serviceBusSection;
-
     private readonly IMessageService _serviceBusService;
 
     public ServiceBusServiceTests()
     {
         _serviceBusClient = new Mock<ServiceBusClient>();
         _serviceBusSender = new Mock<ServiceBusSender>();
-        _configuration = new Mock<IConfiguration>();
-        _serviceBusSection = new Mock<IConfigurationSection>();
 
         var options = new ServiceBusOptions
         {
@@ -31,18 +25,16 @@ public partial class ServiceBusServiceTests
             NamespaceName = "test-namespace",
         };
 
-        _configuration
-            .Setup(c => c.GetSection(ServiceBusOptions.Key))
-            .Returns(_serviceBusSection.Object);
+        var inMemorySettings = new Dictionary<string, string>
+    {
+        { "ServiceBus:QueueName", options.QueueName },
+        { "ServiceBus:NamespaceName", options.NamespaceName }
+    };
 
-        _serviceBusSection
-            .Setup(s => s.Get<ServiceBusOptions>())
-            .Returns(options);
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(inMemorySettings.Cast<KeyValuePair<string, string?>>())
+            .Build();
 
-        _serviceBusClient
-            .Setup(c => c.CreateSender(options.QueueName))
-            .Returns(_serviceBusSender.Object);
-
-        _serviceBusService = new ServiceBusService(_serviceBusClient.Object, _configuration.Object);
+        _serviceBusService = new ServiceBusService(_serviceBusClient.Object, configuration);
     }
 }
