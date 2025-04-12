@@ -42,6 +42,7 @@ builder.Services.AddCors(options =>
                       {
                           policy.WithOrigins([
                             "http://localhost:3000", 
+                            "http://localhost:8080", 
                             "https://snappshare.vercel.app", 
                             "https://77e21a22-11e6-4ffc-8fd7-3066161c4a7c.lovableproject.com",
                             "https://32b87998-ed2e-46ad-9f2a-4dfb5c5fea07.lovableproject.com",
@@ -73,7 +74,7 @@ if (!Directory.Exists(dbFolderPath))
 
 builder.Services.AddDbContext<SnappshareContext>(options =>
 {
-    options.UseSqlite($"Data Source={dbPath}");
+    options.UseSqlite($"Data Source=snappshare.db");
 });
 
 
