@@ -1,11 +1,13 @@
 {
   "version": 2,
-  "dgSpecHash": "un4Ho2pavHE=",
+  "dgSpecHash": "/FB81BGEJ7o=",
   "success": true,
   "projectFilePath": "/Users/freemancodz/Developer/dotnet/projects/SnappShare/api.tests/api.tests.csproj",
   "expectedPackageFiles": [
     "/Users/freemancodz/.nuget/packages/azure.core/1.44.1/azure.core.1.44.1.nupkg.sha512",
+    "/Users/freemancodz/.nuget/packages/azure.core.amqp/1.3.1/azure.core.amqp.1.3.1.nupkg.sha512",
     "/Users/freemancodz/.nuget/packages/azure.identity/1.13.2/azure.identity.1.13.2.nupkg.sha512",
+    "/Users/freemancodz/.nuget/packages/azure.messaging.servicebus/7.19.0/azure.messaging.servicebus.7.19.0.nupkg.sha512",
     "/Users/freemancodz/.nuget/packages/azure.storage.blobs/12.23.0/azure.storage.blobs.12.23.0.nupkg.sha512",
     "/Users/freemancodz/.nuget/packages/azure.storage.common/12.22.0/azure.storage.common.12.22.0.nupkg.sha512",
     "/Users/freemancodz/.nuget/packages/castle.core/5.1.1/castle.core.5.1.1.nupkg.sha512",
@@ -61,6 +63,7 @@
     "/Users/freemancodz/.nuget/packages/humanizer.core.zh-cn/2.14.1/humanizer.core.zh-cn.2.14.1.nupkg.sha512",
     "/Users/freemancodz/.nuget/packages/humanizer.core.zh-hans/2.14.1/humanizer.core.zh-hans.2.14.1.nupkg.sha512",
     "/Users/freemancodz/.nuget/packages/humanizer.core.zh-hant/2.14.1/humanizer.core.zh-hant.2.14.1.nupkg.sha512",
+    "/Users/freemancodz/.nuget/packages/microsoft.azure.amqp/2.6.9/microsoft.azure.amqp.2.6.9.nupkg.sha512",
     "/Users/freemancodz/.nuget/packages/microsoft.bcl.asyncinterfaces/8.0.0/microsoft.bcl.asyncinterfaces.8.0.0.nupkg.sha512",
     "/Users/freemancodz/.nuget/packages/microsoft.codecoverage/17.12.0/microsoft.codecoverage.17.12.0.nupkg.sha512",
     "/Users/freemancodz/.nuget/packages/microsoft.data.sqlite.core/8.0.4/microsoft.data.sqlite.core.8.0.4.nupkg.sha512",
