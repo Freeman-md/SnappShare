@@ -49,7 +49,7 @@ public partial class ServiceBusServiceTests
     }
 
     [Fact]
-    public async Task SendAsync_ShouldThrowException_WhenSerializationFails()
+    public async Task SendAsync_ShouldThrowException_WhenPayloadSerializationFails()
     {
         var obj = new Dictionary<string, object>();
         obj["self"] = obj;
@@ -57,6 +57,10 @@ public partial class ServiceBusServiceTests
 
         await Assert.ThrowsAsync<JsonException>(() =>
             _serviceBusService.SendAsync(obj));
+
+            _serviceBusSender.Verify(s =>
+            s.SendMessageAsync(It.IsAny<ServiceBusMessage>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
