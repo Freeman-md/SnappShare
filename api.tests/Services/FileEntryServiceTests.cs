@@ -14,6 +14,7 @@ public partial class FileEntryServiceTests
 {
     private Mock<ILogger<FileEntryService>> _logger;
     private readonly Mock<IBlobService> _blobService;
+    private readonly Mock<IMessageService> _messageService;
 
     private readonly Mock<IFileEntryRepository> _fileEntryRepository;
     private readonly Mock<IChunkRepository> _chunkRepository;
@@ -25,6 +26,7 @@ public partial class FileEntryServiceTests
     {
         _logger = new Mock<ILogger<FileEntryService>>();
         _blobService = new Mock<IBlobService>();
+        _messageService = new Mock<IMessageService>();
         _fileEntryRepository = new Mock<IFileEntryRepository>();
         _chunkRepository = new Mock<IChunkRepository>();
         var storage = new StorageOptions { AccountName = "testAccount", ContainerName = "test-container" };
@@ -33,6 +35,7 @@ public partial class FileEntryServiceTests
         _fileEntryServiceMock = new Mock<FileEntryService>(
             _logger.Object,
             _blobService.Object,
+            _messageService.Object,
             _fileEntryRepository.Object,
             _chunkRepository.Object,
             _storageOptions

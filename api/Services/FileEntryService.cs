@@ -16,7 +16,7 @@ public class FileEntryService : IFileEntryService
 {
     private ILogger<FileEntryService> _logger;
     private readonly IBlobService _blobService;
-
+    private readonly IMessageService _messageService;
     private readonly IFileEntryRepository _fileEntryRepository;
     private readonly IChunkRepository _chunkRepository;
     private readonly string BlobContainerName;
@@ -24,6 +24,7 @@ public class FileEntryService : IFileEntryService
     public FileEntryService(
         ILogger<FileEntryService> logger,
         IBlobService blobService,
+        IMessageService messageService,
         IFileEntryRepository fileEntryRepository,
         IChunkRepository chunkRepository,
         IOptions<StorageOptions> storageOptions
@@ -31,6 +32,7 @@ public class FileEntryService : IFileEntryService
     {
         _logger = logger;
         _blobService = blobService;
+        _messageService = messageService;
         _fileEntryRepository = fileEntryRepository;
         _chunkRepository = chunkRepository;
 
