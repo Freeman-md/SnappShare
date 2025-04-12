@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.Extensions.Azure;
 using DotNetEnv;
 using api.Data;
+using api.Extensions;
 using Microsoft.EntityFrameworkCore;
 using api.Interfaces.Repositories;
 using api.Repositories;
@@ -19,19 +20,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<StorageOptions>(builder.Configuration.GetSection(StorageOptions.Key));
 
-builder.Services.AddAzureClients(clientBuilder =>
-{
-    var storageOptions = builder.Configuration.GetSection(StorageOptions.Key).Get<StorageOptions>();
-    
-    clientBuilder.AddBlobServiceClient(new Uri($"https://{storageOptions?.AccountName}.blob.core.windows.net"));
-    clientBuilder.UseCredential(new DefaultAzureCredential(new DefaultAzureCredentialOptions
-    {
-        ExcludeAzureCliCredential = true,
-        ExcludeVisualStudioCredential = true,
-        ExcludeVisualStudioCodeCredential = true,
-        ExcludeInteractiveBrowserCredential = true
-    }));
-});
+builder.Services.AddAzureServices(builder.Configuration);
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
