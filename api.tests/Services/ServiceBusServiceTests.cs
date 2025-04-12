@@ -1,5 +1,6 @@
 using System;
 using api.Configs;
+using api.Interfaces.Services;
 using api.Services;
 using Azure.Messaging.ServiceBus;
 using Microsoft.Extensions.Configuration;
@@ -15,7 +16,7 @@ public partial class ServiceBusServiceTests
 
     private readonly Mock<IConfigurationSection> _serviceBusSection;
 
-    private readonly ServiceBusService _serviceBusService;
+    private readonly IMessageService _serviceBusService;
 
     public ServiceBusServiceTests()
     {

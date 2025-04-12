@@ -53,7 +53,7 @@ public static class AzureServiceExtensions
 
         services.AddSingleton<ServiceBusClient>(_ => serviceBusClient);
         
-        services.AddScoped<IServiceBusService, ServiceBusService>();
+        services.AddScoped<IMessageService, ServiceBusService>();
 
         return services;
     }

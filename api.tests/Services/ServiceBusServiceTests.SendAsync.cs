@@ -62,7 +62,7 @@ public partial class ServiceBusServiceTests
     [Fact]
     public async Task SendAsync_ShouldHandleNullPayload_Gracefully()
     {
-        object payload = null;
+        object payload = null!;
 
         _serviceBusSender
             .Setup(s => s.SendMessageAsync(It.IsAny<ServiceBusMessage>(), It.IsAny<CancellationToken>()))

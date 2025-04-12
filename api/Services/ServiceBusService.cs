@@ -4,7 +4,7 @@ using Azure.Messaging.ServiceBus;
 
 namespace api.Services;
 
-public class ServiceBusService : IServiceBusService
+public class ServiceBusService : IMessageService
 {
     private readonly ServiceBusSender _serviceBusSender;
 
