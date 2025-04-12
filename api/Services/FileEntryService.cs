@@ -192,8 +192,19 @@ public class FileEntryService : IFileEntryService
 
             await _blobService.CommitBlockListAsync(fileEntry.FileName, BlobContainerName, blockIds);
 
-            DateTimeOffset expiryTime = DateTimeOffset.UtcNow.AddMinutes(30);
+            DateTimeOffset expiryTime = DateTimeOffset.UtcNow.AddMinutes((int)fileEntry.ExpiresIn);
+            
             string fileUrl = await _blobService.GenerateSasTokenAsync(fileEntry.FileName, BlobContainerName, expiryTime);
+
+            var deletePayload = new DeleteFileMessage
+            {
+                FileId = fileEntry.Id,
+                FileName = fileEntry.FileName,
+                ContainerName = BlobContainerName,
+                ExpiresAt = expiryTime
+            };
+
+            await _messageService.ScheduleAsync(deletePayload, expiryTime);
 
             await _fileEntryRepository.MarkUploadComplete(fileId, fileUrl);
 
@@ -281,8 +292,10 @@ public class FileEntryService : IFileEntryService
             throw new ArgumentException("Chunk file must not be null or empty.", name);
     }
 
-    private static void ValidateExpiryDuration(ExpiryDuration value, string name) {
-        if (!Enum.IsDefined(typeof(ExpiryDuration), value)) {
+    private static void ValidateExpiryDuration(ExpiryDuration value, string name)
+    {
+        if (!Enum.IsDefined(typeof(ExpiryDuration), value))
+        {
             throw new ArgumentOutOfRangeException(name, $"Invalid expiry duration: {value}");
         }
     }
