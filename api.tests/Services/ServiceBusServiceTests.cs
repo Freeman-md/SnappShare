@@ -26,14 +26,18 @@ public partial class ServiceBusServiceTests
         };
 
         var inMemorySettings = new Dictionary<string, string>
-    {
-        { "ServiceBus:QueueName", options.QueueName },
-        { "ServiceBus:NamespaceName", options.NamespaceName }
-    };
+        {
+            { "ServiceBus:QueueName", options.QueueName },
+            { "ServiceBus:NamespaceName", options.NamespaceName }
+        };
 
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(inMemorySettings.Cast<KeyValuePair<string, string?>>())
             .Build();
+
+        _serviceBusClient
+            .Setup(client => client.CreateSender(options.QueueName))
+            .Returns(_serviceBusSender.Object);
 
         _serviceBusService = new ServiceBusService(_serviceBusClient.Object, configuration);
     }

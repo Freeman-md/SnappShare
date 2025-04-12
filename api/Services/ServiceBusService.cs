@@ -1,3 +1,5 @@
+using System.Text;
+using System.Text.Json;
 using api.Configs;
 using api.Interfaces.Services;
 using Azure.Messaging.ServiceBus;
@@ -14,13 +16,44 @@ public class ServiceBusService : IMessageService
 
         _serviceBusSender = serviceBusClient.CreateSender(options.QueueName);
     }
-    public Task ScheduleAsync<T>(T payload, DateTimeOffset scheduleAt)
+    public async Task SendAsync<T>(T payload, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        try
+        {
+            var json = JsonSerializer.Serialize(payload);
+            var message = new ServiceBusMessage(Encoding.UTF8.GetBytes(json))
+            {
+                ContentType = "application/json"
+            };
+
+            await _serviceBusSender.SendMessageAsync(message, cancellationToken);
+        }
+        catch (Exception)
+        {
+            throw;
+        }
     }
 
-    public Task SendAsync<T>(T payload, CancellationToken cancellationToken = default)
+    public async Task ScheduleAsync<T>(T payload, DateTimeOffset scheduleAt)
     {
-        throw new NotImplementedException();
+        if (scheduleAt <= DateTimeOffset.UtcNow)
+        {
+            throw new ArgumentException("Schedule time must be in the future.");
+        }
+
+        try
+        {
+            var json = JsonSerializer.Serialize(payload);
+            var message = new ServiceBusMessage(Encoding.UTF8.GetBytes(json))
+            {
+                ContentType = "application/json"
+            };
+
+            await _serviceBusSender.ScheduleMessageAsync(message, scheduleAt.UtcDateTime);
+        }
+        catch (Exception)
+        {
+            throw;
+        }
     }
 }

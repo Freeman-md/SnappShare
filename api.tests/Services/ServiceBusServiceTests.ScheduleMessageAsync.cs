@@ -61,7 +61,7 @@ public partial class ServiceBusServiceTests
             _serviceBusService.ScheduleAsync(payload, scheduleTime));
 
         _serviceBusSender.Verify(s =>
-            s.ScheduleMessageAsync(It.IsAny<ServiceBusMessage>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()),
+            s.ScheduleMessageAsync(It.IsAny<ServiceBusMessage>(), scheduleTime, It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
