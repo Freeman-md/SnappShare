@@ -55,7 +55,7 @@ public class FileEntryService : IFileEntryService
         List<Chunk> uploadedChunks = await _chunkRepository.GetUploadedChunksByFileId(fileEntry.Id);
         var uploadedIndexes = uploadedChunks.Select(c => c.ChunkIndex).ToList();
 
-        if (uploadedIndexes.Count == fileEntry.TotalChunks)
+        if (uploadedIndexes.Count == fileEntry.TotalChunks) //TODO: Also check if file hasn't expired too.
         {
             return new UploadResponseDto
             {

@@ -55,19 +55,11 @@ builder.Services.AddScoped<IFileRepository, FileRepository>();
 builder.Services.AddScoped<IFileEntryRepository, FileEntryRepository>();
 builder.Services.AddScoped<IChunkRepository, ChunkRepository>();
 
-string dbFolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SnappShare");
-string dbPath = Path.Combine(dbFolderPath, "snappshare.db");
-
-// Ensure the database folder exists
-if (!Directory.Exists(dbFolderPath))
-{
-    Directory.CreateDirectory(dbFolderPath);
-}
-
 builder.Services.AddDbContext<SnappshareContext>(options =>
-{
-    options.UseSqlite($"Data Source=snappshare.db");
-});
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("Snappshare"),
+        sqlOptions => sqlOptions.EnableRetryOnFailure()
+    ));
 
 
 builder.Services.AddControllers(
@@ -103,7 +95,7 @@ using (var scope = app.Services.CreateScope())
     
     if (app.Environment.IsDevelopment())
     {
-        dbContext.Database.EnsureDeleted();
+        // dbContext.Database.EnsureDeleted();
         dbContext.Database.Migrate();
     }
 }
