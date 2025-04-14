@@ -29,6 +29,9 @@ jobs:
       - name: Test
         run: dotnet test --no-restore --verbosity normal
 
+      - name: Clean previous builds
+        run: dotnet clean
+
       - name: dotnet publish
         run: dotnet publish api/api.csproj -c Release -o ./publish
 
