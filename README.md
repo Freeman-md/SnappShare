@@ -1,79 +1,131 @@
 # SnappShare
 
-SnappShare is a simple, secure, and time-sensitive file-sharing API powered by **Azure Blob Storage**. Users can upload files, generate **self-expiring** links, and have files automatically deleted after a set duration using Azure's **Lifecycle Management**.
+SnappShare is a lightweight, secure file-sharing solution built with Azure and chunked, resumable uploads. It lets you upload large files from your phone or computer and generate a time-limited, secure link using Azure SAS tokens.
 
-## Features
+---
 
-- 📤 **File Upload**: Upload files to an Azure Blob Storage container.
-- ⏳ **Expiring File Links**: Generate **SAS tokens** that expire based on user-defined duration.
-- 🗑️ **Auto Deletion**: Files are automatically removed using Azure **Lifecycle Management**.
-- 📄 **API Documentation**: Fully documented API using **Swagger UI**.
+## 🚀 Why SnappShare?
 
-## How It Works
+One time, I needed to share a large file from my phone. I didn’t want to sign up for anything — just upload and send. But with network instability, every failed attempt meant starting over. That got me thinking:
 
-1. **Upload a File** → Specify an expiry duration (e.g., 10 minutes, 1 hour, etc.).
-2. **Generate a Secure Link** → A SAS (Shared Access Signature) token is generated, allowing temporary access.
-3. **File Auto-Deletion** → Azure Lifecycle Management automatically deletes expired files.
+**What if you could upload big files safely — and not worry about network drops or data loss?**
 
-## API Endpoints
+SnappShare solves that.
 
-### Upload File
-```
-POST /File/upload
-```
-- **Request**: Multipart form-data with `File` and `ExpiryDuration`
-- **Response**: A **temporary** URL that expires based on the duration provided.
+---
 
-### Example Response
-```json
-{
-  "statusCode": 200,
-  "message": "Success",
-  "data": {
-    "expiryDuration": "Expires in 10 minutes",
-    "fileUrl": "https://snappshare.blob.core.windows.net/..."
-  }
-}
-```
+## ⚙ How It Works
 
-## Setup & Deployment
+1. 📤 **Chunk Uploads**: Files are uploaded in chunks (starting from 1MB, up to 5MB max per chunk). This means uploads resume from where they stopped — no restarts needed.
+2. 🔐 **Secure Access**: Files are served via a time-limited [SAS Token](https://learn.microsoft.com/en-us/azure/storage/common/storage-sas-overview) URL — only valid for the specified time.
+3. 🧹 **Auto Deletion**: Azure Lifecycle rules clean up expired files automatically.
+
+---
+
+## 🧱 Architecture (Refined MVP)
+
+### Frontend
+- Built with **React.js** (Vite + TypeScript + Tailwind + Shadcn/UI)
+
+### Backend
+- ASP.NET Core Web API (v8)
+- Chunked uploads handled via endpoints
+- Files stored in Azure Blob Storage
+- SQL Database stores file metadata
+
+### Identity & Access
+- 🔒 Secure Azure access using:
+  - **Service Principal** in local development
+  - **Managed Identity** in production (App Service)
+- Used for connecting to Blob Storage, SQL DB, and Service Bus
+
+### Cloud Services
+- **Azure Blob Storage** – file storage with lifecycle rules
+- **Azure SQL Database** – stores file and chunk metadata
+- **Azure Service Bus** – used internally for chunk coordination
+
+### Deployment
+- GitHub Actions CI/CD to **Azure App Service**
+- Live logs via Azure Log Stream (App Service > Logs > Stream)
+
+---
+
+## 📌 API Summary
+
+### `POST /file-entry/handle-upload`
+Handles chunk upload. Accepts:
+- `fileName`, `fileHash`, `chunkIndex`, `totalChunks`, `fileSize`, `chunkHash`, `expiresIn`, `chunkFile`
+
+Returns:
+- Upload status
+- Final secure file URL (when all chunks uploaded)
+
+---
+
+## 🌐 Live App
+👉 [Check it out](https://snappshare.vercel.app)
+
+---
+
+## 📸 Screenshots
+
+- ✅ Upload interface (React)
+- 🔒 SAS Token logic
+- 🌩️ Azure Storage Blob view
+- 🔄 Retry/resume logic for chunked files
+
+---
+
+## 📂 Running Locally
 
 ### Requirements
 - .NET 8
-- Azure Storage Account
-- Azure Blob Storage
-- Azure Lifecycle Management (for auto-deletion)
+- Azure Blob Storage + SQL + Service Principal credentials
 
-### Environment Variables
-- Setup a Service Principal in Azure 
-- Create a **.env** file with:
+### Setup
+1. Add your Azure values to `.env`:
 ```
-AZURE_CLIENT_ID=
-AZURE_TENANT_ID=
-AZURE_CLIENT_SECRET=
-```
-- Add Your Storage Account Name in appsetting.json:
-```
-STORAGE_ACCOUNT_NAME
+AZURE_CLIENT_ID=...
+AZURE_TENANT_ID=...
+AZURE_CLIENT_SECRET=...
 ```
 
-### Running Locally
+2. Add connection string and other app settings to `appsettings.json` (for local only):
+```json
+"Storage": {
+  "AccountName": "<account-name>",
+  "ContainerName": "<container-name>"
+},
+"ServiceBus": {
+  "NamespaceName": "<namespace-name>",
+  "QueueName": "<queue-name>"
+},
+"ConnectionStrings": {
+  "Snappshare": "Server=...;Initial Catalog=...;Authentication=Active Directory Default;"
+}
+```
+
+3. Run the API:
 ```
 dotnet run
 ```
 
-## Screenshots
-📌 **Code Samples:**
-![SAS Token Generation](images/code-1.png)
-![File Upload API](images/code-2.png)
+---
 
-📌 **Azure Integration:**
-![Lifecycle Management](images/lifecycle.jpg)
-![Swagger API Docs](images/swagger.jpg)
-![Uploaded Files in Storage](images/blob.jpg)
+## 🧠 Future Plans
+- ⏫ Drag and drop multiple files
+- 📥 File download analytics
+- 🧾 Download receipts for time tracking
+- 🔑 Optional OTP/email-secured access
 
-📩 **Have ideas or questions? Let's connect!**
+---
 
--   **Twitter (X):** [@freemancodz](https://x.com/freemancodz)
--   **LinkedIn:** [Freeman Madudili](https://www.linkedin.com/in/freeman-madudili-9864101a2/)
+## 💬 Feedback?
+I’d love to hear from you — what features would you like next?
 
+- 🧵 [Twitter (X)](https://x.com/freemancodz)
+- 💼 [LinkedIn](https://www.linkedin.com/in/freeman-madudili-9864101a2/)
+
+---
+
+SnappShare — Fast. Simple. Secure.
