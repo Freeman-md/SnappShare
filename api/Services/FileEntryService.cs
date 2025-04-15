@@ -193,7 +193,7 @@ public class FileEntryService : IFileEntryService
             await _blobService.CommitBlockListAsync(fileEntry.FileName, BlobContainerName, blockIds);
 
             DateTimeOffset expiryTime = DateTimeOffset.UtcNow.AddMinutes((int)fileEntry.ExpiresIn);
-            
+
             string fileUrl = await _blobService.GenerateSasTokenAsync(fileEntry.FileName, BlobContainerName, expiryTime);
 
             var deletePayload = new DeleteFileMessage
@@ -243,7 +243,14 @@ public class FileEntryService : IFileEntryService
 
         if (fileUploadResponse.Status == UploadResponseDtoStatus.COMPLETE) return fileUploadResponse;
 
-        if (fileUploadResponse.TotalChunks.HasValue && (fileUploadResponse.TotalChunks.Value != totalChunks)) throw new Exception("Total chunks is invalid for existing file.");
+        if (fileUploadResponse.TotalChunks.HasValue && (fileUploadResponse.TotalChunks.Value != totalChunks))
+        {
+            long expectedChunkSizeBytes = fileSize / fileUploadResponse.TotalChunks.Value;
+            double expectedChunkSizeMB = Math.Round(expectedChunkSizeBytes / (1024.0 * 1024.0), 2);
+
+            throw new Exception($"TotalChunks mismatch for existing file. Expected: {fileUploadResponse.TotalChunks.Value}, Received: {totalChunks}. Approx. expected chunk size: {expectedChunkSizeMB} MB.");
+
+        }
 
         fileId = fileUploadResponse.Status == UploadResponseDtoStatus.NEW
             ? (await CreateFileEntry(fileName, fileHash, fileSize, totalChunks, expiresIn)).Id
