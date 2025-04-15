@@ -18,7 +18,7 @@ SnappShare solves that.
 
 1. 📤 **Chunk Uploads**: Files are uploaded in chunks (starting from 1MB, up to 5MB max per chunk). This means uploads resume from where they stopped — no restarts needed.
 2. 🔐 **Secure Access**: Files are served via a time-limited [SAS Token](https://learn.microsoft.com/en-us/azure/storage/common/storage-sas-overview) URL — only valid for the specified time.
-3. 🧹 **Auto Deletion**: Azure Lifecycle rules clean up expired files automatically.
+3. 🧹 **Scheduled Deletion**: Once an upload is complete, a deletion message is scheduled via Azure Service Bus. An Azure Function listens and deletes the file at the right time.
 
 ---
 
