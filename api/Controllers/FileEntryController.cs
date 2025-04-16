@@ -70,6 +70,48 @@ public class FileEntryController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Retrieves the status and metadata of an uploaded file.
+    /// </summary>
+    /// <param name="fileId">The unique identifier of the file.</param>
+    /// <returns>Upload response containing file status, chunk progress, and URL if available.</returns>
+    [HttpGet("{fileId}")]
+    [ProducesResponseType(typeof(UploadResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetFileEntry([FromRoute] string fileId)
+    {
+        if (string.IsNullOrWhiteSpace(fileId))
+            return BadRequest(new ErrorApiResponse<object>("File ID must be provided."));
+
+        try
+        {
+            var response = await _fileEntryService.GetFileEntry(fileId);
+            return Ok(response);
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return BadRequest(new ErrorApiResponse<object>(ex.Message));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return NotFound(new ErrorApiResponse<object>(ex.Message));
+        }
+        catch (Azure.RequestFailedException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return BadRequest(new ErrorApiResponse<object>(ExtractAzureErrorMessage(ex)));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            return BadRequest(new ErrorApiResponse<object>(ex.Message));
+        }
+    }
+
+
     private string ExtractAzureErrorMessage(Azure.RequestFailedException ex)
     {
         return ex.ErrorCode switch

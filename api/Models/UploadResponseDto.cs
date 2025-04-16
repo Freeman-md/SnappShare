@@ -14,6 +14,8 @@ public class UploadResponseDto
     public UploadResponseDtoStatus Status { get; set; } = UploadResponseDtoStatus.NEW;
     
     public string? FileId { get; set; }
+    public string? FileName { get; set; }
+    public long? FileSize { get; set; }
     
     public string? FileUrl { get; set; }
 

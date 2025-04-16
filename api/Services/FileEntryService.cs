@@ -275,6 +275,57 @@ public class FileEntryService : IFileEntryService
         };
     }
 
+    public async Task<UploadResponseDto> GetFileEntry(string fileId)
+    {
+        ValidateString(fileId, nameof(fileId));
+
+        var fileEntry = await _fileEntryRepository.FindFileEntryById(fileId)
+                          ?? throw new KeyNotFoundException("No file found with the provided ID.");
+
+        var uploadedChunks = fileEntry.Chunks.Select(c => c.ChunkIndex).ToList();
+
+        var response = new UploadResponseDto
+        {
+            FileId = fileEntry.Id,
+            FileName = fileEntry.FileName,
+            FileSize = fileEntry.FileSize,
+            TotalChunks = fileEntry.TotalChunks,
+            UploadedChunks = uploadedChunks
+        };
+
+        switch (fileEntry.Status)
+        {
+            case FileEntryStatus.Completed:
+                response.Status = UploadResponseDtoStatus.COMPLETE;
+                response.FileUrl = fileEntry.FileUrl;
+                response.Message = "Upload complete. File is ready to access.";
+                break;
+
+            case FileEntryStatus.Pending:
+                response.Status = uploadedChunks.Count == 0
+                    ? UploadResponseDtoStatus.NEW
+                    : UploadResponseDtoStatus.PARTIAL;
+                response.Message = uploadedChunks.Count == 0
+                    ? "Upload has not started yet."
+                    : "Upload in progress. Some chunks are still missing.";
+                break;
+
+            case FileEntryStatus.Failed:
+                response.Status = UploadResponseDtoStatus.FAILED;
+                response.Message = "Upload failed. Please retry or contact support.";
+                break;
+
+            default:
+                response.Status = UploadResponseDtoStatus.FAILED;
+                response.Message = "Upload status is unknown. Please try again later.";
+                break;
+        }
+
+        return response;
+    }
+
+
+
     private static void ValidateString(string? value, string name, string message = "must be provided.")
     {
         if (string.IsNullOrWhiteSpace(value))
