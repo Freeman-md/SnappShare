@@ -1,5 +1,6 @@
 using System;
 using api.Controllers;
+using api.DTOs;
 using api.Enums;
 using api.Models;
 using api.Models.DTOs;
@@ -133,6 +134,43 @@ public class FileEntryControllerTests
             It.IsAny<string>(),
             It.IsAny<ExpiryDuration>()
         ), Times.Never);
+    }
+
+    [Fact]
+    public async Task CreateFileEntry_ReturnsOk_WhenFileIsCreated() {
+        FileEntry fileEntry = new FileEntryBuilder().Build();
+        CreateFileEntryDto fileEntryDto = new CreateFileEntryDtoBuilder(fileEntry).Build();
+
+        _fileEntryService
+                .Setup(service => service.CreateFileEntry(fileEntryDto.FileName, fileEntryDto.FileHash, fileEntryDto.FileSize, fileEntryDto.TotalChunks, fileEntryDto.ExpiresIn))
+                .ReturnsAsync(fileEntry);
+
+        
+        var result = await _fileEntryController.CreateFileEntry(fileEntryDto);
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var response = Assert.IsType<FileEntry>(okResult.Value);
+        Assert.Equal(fileEntry.FileName, fileEntryDto.FileName);
+        _fileEntryService.Verify(
+            service => service.CreateFileEntry(fileEntryDto.FileName, fileEntryDto.FileHash, fileEntryDto.FileSize, fileEntryDto.TotalChunks, fileEntryDto.ExpiresIn),
+            Times.Once
+        );
+    }
+
+     [Fact]
+    public async Task CreateFileEntry_ReturnsBadRequest_WhenUnexpectedExceptionOccurs()
+    {
+        CreateFileEntryDto fileEntryDto = new CreateFileEntryDtoBuilder().Build();
+
+        _fileEntryService
+                .Setup(service => service.CreateFileEntry(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<long>(), It.IsAny<int>(), It.IsAny<ExpiryDuration>()))
+            .ThrowsAsync(new Exception("Something went wrong"));
+
+        var result = await _fileEntryController.CreateFileEntry(fileEntryDto);
+
+        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+        var error = Assert.IsType<ErrorApiResponse<object>>(badRequest.Value);
+        Assert.Equal("Something went wrong", error.ErrorMessage);
     }
 
     [Fact]

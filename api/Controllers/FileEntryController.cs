@@ -20,6 +20,48 @@ public class FileEntryController : ControllerBase
     }
 
     /// <summary>
+    /// Creates New File Entry before upload process
+    /// </summary>
+    /// <param name="dto"></param>
+    /// <returns></returns>
+    [HttpPost("create")]
+    [ProducesResponseType(typeof(FileEntry), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorApiResponse<object>), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CreateFileEntry([FromForm] CreateFileEntryDto dto) {
+        if (!ModelState.IsValid) {
+            return BadRequest(new ErrorApiResponse<object>("Invalid Request"));
+        }
+
+        try
+        {
+            var result = await _fileEntryService.CreateFileEntry(
+                dto.FileName,
+                dto.FileHash,
+                dto.FileSize,
+                dto.TotalChunks,
+                dto.ExpiresIn
+            );
+
+            return Ok(result);
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return BadRequest(new ErrorApiResponse<object>(ex.Message));
+        }
+        catch (Azure.RequestFailedException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return BadRequest(new ErrorApiResponse<object>(ExtractAzureErrorMessage(ex)));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            return BadRequest(new ErrorApiResponse<object>(ex.Message));
+        }
+    }
+
+    /// <summary>
     /// Handles a chunked file upload. Creates the file entry if it's new, uploads a chunk, and finalizes the upload when complete.
     /// </summary>
     /// <param name="fileName">Original file name.</param>
