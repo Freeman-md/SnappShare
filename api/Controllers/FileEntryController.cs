@@ -27,7 +27,7 @@ public class FileEntryController : ControllerBase
     [HttpPost("create")]
     [ProducesResponseType(typeof(FileEntry), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> CreateFileEntry([FromForm] CreateFileEntryDto dto)
+    public async Task<IActionResult> CreateFileEntry([FromBody] CreateFileEntryDto dto)
     {
         if (!ModelState.IsValid)
         {
