@@ -137,7 +137,82 @@ public class FileEntryControllerTests
     }
 
     [Fact]
-    public async Task CreateFileEntry_ReturnsOk_WhenFileIsCreated() {
+    public async Task UploadFileEntry_ShouldReturnOk_WhenUploadIsSuccessful()
+    {
+        var dto = new HandleFileUploadDtoBuilder().Build();
+        var expectedResponse = new UploadResponseDto { Status = UploadResponseDtoStatus.SUCCESS };
+
+        _fileEntryService.Setup(s => s.UploadFileEntryChunk(
+            It.IsAny<string>(), dto.FileName, dto.FileHash, dto.ChunkIndex, dto.TotalChunks, dto.ChunkFile, dto.ChunkHash))
+            .ReturnsAsync(expectedResponse);
+
+        var result = await _fileEntryController.UploadFileEntry("file123", dto);
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var actualResponse = Assert.IsType<UploadResponseDto>(okResult.Value);
+        Assert.Equal(UploadResponseDtoStatus.SUCCESS, actualResponse.Status);
+    }
+
+    [Fact]
+    public async Task UploadFileEntry_ShouldReturnSkippedStatus_WhenChunkAlreadyUploaded()
+    {
+        var dto = new HandleFileUploadDtoBuilder().Build();
+        var expectedResponse = new UploadResponseDto { Status = UploadResponseDtoStatus.SKIPPED };
+
+        _fileEntryService.Setup(s => s.UploadFileEntryChunk(
+            It.IsAny<string>(), dto.FileName, dto.FileHash, dto.ChunkIndex, dto.TotalChunks, dto.ChunkFile, dto.ChunkHash))
+            .ReturnsAsync(expectedResponse);
+
+        var result = await _fileEntryController.UploadFileEntry("file123", dto);
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var actualResponse = Assert.IsType<UploadResponseDto>(okResult.Value);
+        Assert.Equal(UploadResponseDtoStatus.SKIPPED, actualResponse.Status);
+    }
+
+    [Fact]
+    public async Task UploadFileEntry_ShouldReturnBadRequest_WhenModelStateIsInvalid()
+    {
+        var dto = new HandleFileUploadDtoBuilder().Build();
+        _fileEntryController.ModelState.AddModelError("FileHash", "Required");
+
+        var result = await _fileEntryController.UploadFileEntry("file123", dto);
+
+        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+        var errorResponse = Assert.IsType<ErrorApiResponse<object>>(badRequest.Value);
+        Assert.Equal("Invalid Request", errorResponse.ErrorMessage);
+
+        _fileEntryService.Verify(s => s.UploadFileEntryChunk(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<int>(),
+            It.IsAny<int>(),
+            It.IsAny<IFormFile>(),
+            It.IsAny<string>()),
+        Times.Never);
+    }
+
+    [Fact]
+    public async Task UploadFileEntry_ShouldReturnBadRequest_WhenUnexpectedExceptionOccurs()
+    {
+        var dto = new HandleFileUploadDtoBuilder().Build();
+
+        _fileEntryService.Setup(s => s.UploadFileEntryChunk(
+            It.IsAny<string>(), dto.FileName, dto.FileHash, dto.ChunkIndex, dto.TotalChunks, dto.ChunkFile, dto.ChunkHash))
+            .ThrowsAsync(new Exception("Unexpected Error"));
+
+        var result = await _fileEntryController.UploadFileEntry("file123", dto);
+
+        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+        var error = Assert.IsType<ErrorApiResponse<object>>(badRequest.Value);
+        Assert.Equal("Unexpected Error", error.ErrorMessage);
+    }
+
+
+    [Fact]
+    public async Task CreateFileEntry_ReturnsOk_WhenFileIsCreated()
+    {
         FileEntry fileEntry = new FileEntryBuilder().Build();
         CreateFileEntryDto fileEntryDto = new CreateFileEntryDtoBuilder(fileEntry).Build();
 
@@ -145,7 +220,7 @@ public class FileEntryControllerTests
                 .Setup(service => service.CreateFileEntry(fileEntryDto.FileName, fileEntryDto.FileHash, fileEntryDto.FileSize, fileEntryDto.TotalChunks, fileEntryDto.ExpiresIn))
                 .ReturnsAsync(fileEntry);
 
-        
+
         var result = await _fileEntryController.CreateFileEntry(fileEntryDto);
 
         var okResult = Assert.IsType<OkObjectResult>(result);
@@ -157,7 +232,7 @@ public class FileEntryControllerTests
         );
     }
 
-     [Fact]
+    [Fact]
     public async Task CreateFileEntry_ReturnsBadRequest_WhenUnexpectedExceptionOccurs()
     {
         CreateFileEntryDto fileEntryDto = new CreateFileEntryDtoBuilder().Build();

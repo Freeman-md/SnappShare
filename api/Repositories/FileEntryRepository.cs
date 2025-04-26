@@ -43,7 +43,7 @@ public class FileEntryRepository : IFileEntryRepository
     {
         FileEntry? fileEntry = await FindFileEntryById(fileId);
 
-        if (fileEntry == null) throw new KeyNotFoundException($"File with {fileId} does not exist");
+        if (fileEntry == null) throw new KeyNotFoundException($"File with ID, {fileId} does not exist");
 
         if (fileEntry.IsLocked) throw new InvalidOperationException("File is already locked.");
 
@@ -57,7 +57,7 @@ public class FileEntryRepository : IFileEntryRepository
     {
         FileEntry? fileEntry = await FindFileEntryById(fileId);
 
-        if (fileEntry == null) throw new KeyNotFoundException($"File with {fileId} does not exist");
+        if (fileEntry == null) throw new KeyNotFoundException($"File with ID, {fileId} does not exist");
 
         if (!fileEntry.IsLocked) throw new InvalidOperationException("File is not locked.");
 

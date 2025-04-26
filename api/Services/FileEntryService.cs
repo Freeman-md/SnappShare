@@ -7,6 +7,7 @@ using api.Interfaces.Services;
 using api.Models;
 using api.Models.DTOs;
 using api.Tests.Interfaces.Services;
+using Helpers.ValidationHelper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
@@ -40,7 +41,7 @@ public class FileEntryService : IFileEntryService
     }
     public virtual async Task<UploadResponseDto> CheckFileUploadStatus(string fileHash)
     {
-        ValidateString(fileHash, nameof(fileHash));
+        ValidationHelper.ValidateString(fileHash, nameof(fileHash));
 
         FileEntry? fileEntry = await _fileEntryRepository.FindFileEntryByFileHash(fileHash);
 
@@ -62,6 +63,7 @@ public class FileEntryService : IFileEntryService
                 Status = UploadResponseDtoStatus.COMPLETE,
                 FileId = fileEntry.Id,
                 FileUrl = fileEntry.FileUrl,
+                FileSize = fileEntry.FileSize,
                 Message = "File Uploaded Successfully"
             };
         }
@@ -70,6 +72,7 @@ public class FileEntryService : IFileEntryService
         {
             Status = UploadResponseDtoStatus.PARTIAL,
             FileId = fileEntry.Id,
+            FileSize = fileEntry.FileSize,
             UploadedChunks = uploadedIndexes,
             TotalChunks = fileEntry.TotalChunks
         };
@@ -77,11 +80,11 @@ public class FileEntryService : IFileEntryService
 
     public virtual async Task<FileEntry> CreateFileEntry(string fileName, string fileHash, long fileSize, int totalChunks, ExpiryDuration expiresIn)
     {
-        ValidateString(fileName, nameof(fileName));
-        ValidateString(fileHash, nameof(fileHash));
-        ValidatePositiveNumber(totalChunks, nameof(totalChunks));
-        ValidatePositiveNumber(fileSize, nameof(fileSize));
-        ValidateExpiryDuration(expiresIn, nameof(expiresIn));
+        ValidationHelper.ValidateString(fileName, nameof(fileName));
+        ValidationHelper.ValidateString(fileHash, nameof(fileHash));
+        ValidationHelper.ValidatePositiveNumber(totalChunks, nameof(totalChunks));
+        ValidationHelper.ValidatePositiveNumber(fileSize, nameof(fileSize));
+        ValidationHelper.ValidateExpiryDuration(expiresIn, nameof(expiresIn));
 
         var fileEntry = new FileEntry
         {
@@ -101,11 +104,11 @@ public class FileEntryService : IFileEntryService
     {
         try
         {
-            ValidateString(fileName, nameof(fileName));
-            ValidateString(fileId, nameof(fileId));
-            ValidateString(chunkHash, nameof(chunkHash));
-            ValidateNonNegativeNumber(chunkIndex, nameof(chunkIndex));
-            ValidateChunkFile(chunkFile, nameof(chunkFile));
+            ValidationHelper.ValidateString(fileName, nameof(fileName));
+            ValidationHelper.ValidateString(fileId, nameof(fileId));
+            ValidationHelper.ValidateString(chunkHash, nameof(chunkHash));
+            ValidationHelper.ValidateNonNegativeNumber(chunkIndex, nameof(chunkIndex));
+            ValidationHelper.ValidateChunkFile(chunkFile, nameof(chunkFile));
 
             await _fileEntryRepository.LockFile(fileId);
 
@@ -154,7 +157,7 @@ public class FileEntryService : IFileEntryService
     {
         try
         {
-            ValidateString(fileId, nameof(fileId));
+            ValidationHelper.ValidateString(fileId, nameof(fileId));
 
             FileEntry? fileEntry = await _fileEntryRepository.FindFileEntryById(fileId);
 
@@ -229,14 +232,14 @@ public class FileEntryService : IFileEntryService
 
     public async Task<UploadResponseDto> HandleFileUpload(string fileName, string fileHash, long fileSize, int chunkIndex, int totalChunks, IFormFile chunkFile, string chunkHash, ExpiryDuration expiresIn)
     {
-        ValidateString(fileName, nameof(fileName));
-        ValidateString(fileHash, nameof(fileHash));
-        ValidateString(chunkHash, nameof(chunkHash));
-        ValidateNonNegativeNumber(chunkIndex, nameof(chunkIndex));
-        ValidatePositiveNumber(totalChunks, nameof(totalChunks));
-        ValidatePositiveNumber(fileSize, nameof(fileSize));
-        ValidateChunkFile(chunkFile, nameof(chunkFile));
-        ValidateExpiryDuration(expiresIn, nameof(expiresIn));
+        ValidationHelper.ValidateString(fileName, nameof(fileName));
+        ValidationHelper.ValidateString(fileHash, nameof(fileHash));
+        ValidationHelper.ValidateString(chunkHash, nameof(chunkHash));
+        ValidationHelper.ValidateNonNegativeNumber(chunkIndex, nameof(chunkIndex));
+        ValidationHelper.ValidatePositiveNumber(totalChunks, nameof(totalChunks));
+        ValidationHelper.ValidatePositiveNumber(fileSize, nameof(fileSize));
+        ValidationHelper.ValidateChunkFile(chunkFile, nameof(chunkFile));
+        ValidationHelper.ValidateExpiryDuration(expiresIn, nameof(expiresIn));
 
         string fileId;
         var fileUploadResponse = await CheckFileUploadStatus(fileHash);
@@ -275,9 +278,39 @@ public class FileEntryService : IFileEntryService
         };
     }
 
+    public async Task<UploadResponseDto> UploadFileEntryChunk(string fileId, string fileName, string fileHash, int chunkIndex, int totalChunks, IFormFile chunkFile, string chunkHash)
+    {
+        ValidationHelper.ValidateString(fileId, nameof(fileId));
+        ValidationHelper.ValidateString(fileName, nameof(fileName));
+        ValidationHelper.ValidateString(fileHash, nameof(fileHash));
+        ValidationHelper.ValidateString(chunkHash, nameof(chunkHash));
+        ValidationHelper.ValidateNonNegativeNumber(chunkIndex, nameof(chunkIndex));
+        ValidationHelper.ValidatePositiveNumber(totalChunks, nameof(totalChunks));
+        ValidationHelper.ValidateChunkFile(chunkFile, nameof(chunkFile));
+
+        var fileUploadResponse = await CheckFileUploadStatus(fileHash);
+
+        if (fileUploadResponse.Status == UploadResponseDtoStatus.COMPLETE) return fileUploadResponse;
+
+        ValidateTotalChunks(fileUploadResponse, totalChunks);
+
+        fileId = fileUploadResponse.FileId!;
+
+        var chunkUploadResponse = await UploadChunk(fileId, fileName, chunkIndex, chunkFile, chunkHash);
+
+        return new UploadResponseDto
+        {
+            Status = chunkUploadResponse.Status,
+            UploadedChunk = chunkUploadResponse.UploadedChunk,
+            Message = chunkUploadResponse.Message,
+            FileId = fileId
+        };
+
+    }
+
     public async Task<UploadResponseDto> GetFileEntry(string fileId)
     {
-        ValidateString(fileId, nameof(fileId));
+        ValidationHelper.ValidateString(fileId, nameof(fileId));
 
         var fileEntry = await _fileEntryRepository.FindFileEntryById(fileId)
                           ?? throw new KeyNotFoundException("No file found with the provided ID.");
@@ -324,38 +357,15 @@ public class FileEntryService : IFileEntryService
         return response;
     }
 
-
-
-    private static void ValidateString(string? value, string name, string message = "must be provided.")
+    private void ValidateTotalChunks(UploadResponseDto fileUploadResponse, int totalChunks)
+{
+    if (fileUploadResponse.TotalChunks.HasValue && (fileUploadResponse.TotalChunks.Value != totalChunks))
     {
-        if (string.IsNullOrWhiteSpace(value))
-            throw new ArgumentException($"{name} {message}", name);
-    }
+        long expectedChunkSizeBytes = (fileUploadResponse.FileSize ?? 0) / fileUploadResponse.TotalChunks.Value;
+        double expectedChunkSizeMB = Math.Round(expectedChunkSizeBytes / (1024.0 * 1024.0), 2);
 
-    private static void ValidatePositiveNumber(long value, string name)
-    {
-        if (value <= 0)
-            throw new ArgumentException($"{name} must be a positive number.", name);
+        throw new Exception($"TotalChunks mismatch for existing file. Expected: {fileUploadResponse.TotalChunks.Value}, Received: {totalChunks}. Approx. expected chunk size: {expectedChunkSizeMB} MB.");
     }
-
-    private static void ValidateNonNegativeNumber(int value, string name)
-    {
-        if (value < 0)
-            throw new ArgumentException($"{name} must be a non-negative number.", name);
-    }
-
-    private static void ValidateChunkFile(IFormFile? file, string name = "chunkFile")
-    {
-        if (file == null || file.Length <= 0)
-            throw new ArgumentException("Chunk file must not be null or empty.", name);
-    }
-
-    private static void ValidateExpiryDuration(ExpiryDuration value, string name)
-    {
-        if (!Enum.IsDefined(typeof(ExpiryDuration), value))
-        {
-            throw new ArgumentOutOfRangeException(name, $"Invalid expiry duration: {value}");
-        }
-    }
+}
 
 }

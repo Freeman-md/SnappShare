@@ -147,6 +147,44 @@ public class FileEntryController : ControllerBase
         }
     }
 
+    [HttpPost("{fileId}/upload")]
+    [ProducesResponseType(typeof(UploadResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorApiResponse<object>), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UploadFileEntry([FromRoute]string fileId, [FromForm] HandleFileUploadDto dto) {
+        if (!ModelState.IsValid)
+            return BadRequest(new ErrorApiResponse<object>("Invalid Request"));
+
+        try
+        {
+            var result = await _fileEntryService.UploadFileEntryChunk(
+                                fileId,
+                                dto.FileName,
+                                dto.FileHash,
+                                dto.ChunkIndex,
+                                dto.TotalChunks,
+                                dto.ChunkFile,
+                                dto.ChunkHash
+                            );
+
+            return Ok(result);
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return BadRequest(new ErrorApiResponse<object>(ex.Message));
+        }
+        catch (Azure.RequestFailedException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return BadRequest(new ErrorApiResponse<object>(ExtractAzureErrorMessage(ex)));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            return BadRequest(new ErrorApiResponse<object>(ex.Message));
+        }
+    }
+
     /// <summary>
     /// Rounds off file upload for a particular file, marks it as complete and schedules a message to delete at a specified time
     /// </summary>
