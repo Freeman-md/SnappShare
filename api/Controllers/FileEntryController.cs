@@ -147,6 +147,11 @@ public class FileEntryController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Rounds off file upload for a particular file, marks it as complete and schedules a message to delete at a specified time
+    /// </summary>
+    /// <param name="fileId"></param>
+    /// <returns></returns>
     [HttpPost("{fileId}/finalize")]
     [ProducesResponseType(typeof(UploadResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorApiResponse<object>), StatusCodes.Status400BadRequest)]
