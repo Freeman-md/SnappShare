@@ -147,6 +147,42 @@ public class FileEntryController : ControllerBase
         }
     }
 
+    [HttpPost("{fileId}/finalize")]
+    [ProducesResponseType(typeof(UploadResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorApiResponse<object>), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> FinalizeFileEntry([FromRoute] string fileId) {
+        if (string.IsNullOrWhiteSpace(fileId)) {
+            return BadRequest(new ErrorApiResponse<object>("File ID must be provided"));
+        }
+
+        try
+        {
+            UploadResponseDto result = await _fileEntryService.FinalizeUpload(fileId);
+
+            return Ok(result);
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return BadRequest(new ErrorApiResponse<object>(ex.Message));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return NotFound(new ErrorApiResponse<object>(ex.Message));
+        }
+        catch (Azure.RequestFailedException ex)
+        {
+            _logger.LogWarning(ex, ex.Message);
+            return BadRequest(new ErrorApiResponse<object>(ExtractAzureErrorMessage(ex)));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            return BadRequest(new ErrorApiResponse<object>(ex.Message));
+        }
+    }
+
 
     private string ExtractAzureErrorMessage(Azure.RequestFailedException ex)
     {

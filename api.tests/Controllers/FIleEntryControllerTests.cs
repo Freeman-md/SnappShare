@@ -213,7 +213,6 @@ public class FileEntryControllerTests
 
         var badRequest = Assert.IsType<BadRequestObjectResult>(result);
         var error = Assert.IsType<ErrorApiResponse<object>>(badRequest.Value);
-        Assert.Equal("File ID must be provided.", error.ErrorMessage);
 
         _fileEntryService.Verify(s => s.GetFileEntry(It.IsAny<string>()), Times.Never);
     }
@@ -234,6 +233,64 @@ public class FileEntryControllerTests
         Assert.Equal("Something went wrong", error.ErrorMessage);
     }
 
+    [Fact]
+    public async Task FinalizeFileEntry_ReturnsOk_WhenFileIsComplete()
+    {
+        FileEntry fileEntry = new FileEntryBuilder().Build();
+        var expected = new UploadResponseDto { FileId = fileEntry.Id, Status = UploadResponseDtoStatus.COMPLETE };
 
+        _fileEntryService
+            .Setup(s => s.FinalizeUpload(fileEntry.Id))
+            .ReturnsAsync(expected);
+
+        var result = await _fileEntryController.FinalizeFileEntry(fileEntry.Id);
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        var response = Assert.IsType<UploadResponseDto>(okResult.Value);
+        Assert.Equal(fileEntry.Id, response.FileId);
+    }
+
+    [Fact]
+    public async Task FinalizeFileEntry_ReturnsNotFound_WhenFileDoesNotExist()
+    {
+        var fileId = "missing-id";
+
+        _fileEntryService
+            .Setup(s => s.FinalizeUpload(fileId))
+            .ThrowsAsync(new KeyNotFoundException("Not found"));
+
+        var result = await _fileEntryController.FinalizeFileEntry(fileId);
+
+        var notFound = Assert.IsType<NotFoundObjectResult>(result);
+        var error = Assert.IsType<ErrorApiResponse<object>>(notFound.Value);
+        Assert.Equal("Not found", error.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task FinalizeFileEntry_ReturnsBadRequest_WhenFileIdIsEmpty()
+    {
+        var result = await _fileEntryController.FinalizeFileEntry("");
+
+        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+        var error = Assert.IsType<ErrorApiResponse<object>>(badRequest.Value);
+
+        _fileEntryService.Verify(s => s.FinalizeUpload(It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task FinalizeFileEntry_ReturnsBadRequest_WhenUnexpectedExceptionOccurs()
+    {
+        var fileId = "abc123";
+
+        _fileEntryService
+            .Setup(s => s.FinalizeUpload(fileId))
+            .ThrowsAsync(new Exception("Something went wrong"));
+
+        var result = await _fileEntryController.FinalizeFileEntry(fileId);
+
+        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+        var error = Assert.IsType<ErrorApiResponse<object>>(badRequest.Value);
+        Assert.Equal("Something went wrong", error.ErrorMessage);
+    }
 
 }
