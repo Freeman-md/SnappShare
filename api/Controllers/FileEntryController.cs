@@ -23,7 +23,7 @@ public class FileEntryController : ControllerBase
     /// Creates New File Entry before upload process
     /// </summary>
     /// <param name="dto"></param>
-    /// <returns></returns>
+    /// <returns>Newly created file entry</returns>
     [HttpPost("create")]
     [ProducesResponseType(typeof(FileEntry), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorApiResponse<object>), StatusCodes.Status400BadRequest)]
@@ -64,13 +64,7 @@ public class FileEntryController : ControllerBase
     /// <summary>
     /// Handles a chunked file upload. Creates the file entry if it's new, uploads a chunk, and finalizes the upload when complete.
     /// </summary>
-    /// <param name="fileName">Original file name.</param>
-    /// <param name="fileHash">Hash of the entire file (used for resumability).</param>
-    /// <param name="fileSize">Size of the file in bytes.</param>
-    /// <param name="chunkIndex">Index of the current chunk (0-based).</param>
-    /// <param name="totalChunks">Total number of chunks the file has.</param>
-    /// <param name="chunkFile">The file chunk being uploaded.</param>
-    /// <param name="chunkHash">Hash of the chunk (used for deduplication).</param>
+    /// <param name="dto"></param>
     /// <returns>Upload result indicating current status of upload (SUCCESS, SKIPPED, or COMPLETE).</returns>
     [HttpPost("handle-upload")]
     [ProducesResponseType(typeof(UploadResponseDto), StatusCodes.Status200OK)]
