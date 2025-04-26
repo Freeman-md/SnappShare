@@ -20,15 +20,17 @@ public class FileEntryController : ControllerBase
     }
 
     /// <summary>
-    /// Creates New File Entry before upload process
+    /// Creates a new file entry with upload metadata before starting the chunked upload process.
     /// </summary>
-    /// <param name="dto"></param>
-    /// <returns>Newly created file entry</returns>
+    /// <param name="dto">Details of the file to be uploaded, including size, hash, and expiry settings.</param>
+    /// <returns>The created file entry metadata.</returns>
     [HttpPost("create")]
     [ProducesResponseType(typeof(FileEntry), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> CreateFileEntry([FromForm] CreateFileEntryDto dto) {
-        if (!ModelState.IsValid) {
+    public async Task<IActionResult> CreateFileEntry([FromForm] CreateFileEntryDto dto)
+    {
+        if (!ModelState.IsValid)
+        {
             return BadRequest(new ErrorApiResponse<object>("Invalid Request"));
         }
 
@@ -62,10 +64,11 @@ public class FileEntryController : ControllerBase
     }
 
     /// <summary>
-    /// Handles a chunked file upload. Creates the file entry if it's new, uploads a chunk, and finalizes the upload when complete.
+    /// Handles a chunked file upload. Automatically creates a file entry if new, uploads the chunk, and finalizes the upload when complete.
     /// </summary>
-    /// <param name="dto"></param>
-    /// <returns>Upload result indicating current status of upload (SUCCESS, SKIPPED, or COMPLETE).</returns>
+    /// <param name="dto">Information about the file chunk being uploaded.</param>
+    /// <returns>Upload result indicating the current status (SUCCESS, SKIPPED, or COMPLETE).</returns>
+
     [HttpPost("handle-upload")]
     [ProducesResponseType(typeof(UploadResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorApiResponse<object>), StatusCodes.Status400BadRequest)]
@@ -107,10 +110,11 @@ public class FileEntryController : ControllerBase
     }
 
     /// <summary>
-    /// Retrieves the status and metadata of an uploaded file.
+    /// Retrieves the upload status, chunk progress, and secure download URL for a given file ID.
+    /// Returns 400 if the file ID is invalid, or 404 if the file does not exist.
     /// </summary>
-    /// <param name="fileId">The unique identifier of the file.</param>
-    /// <returns>Upload response containing file status, chunk progress, and URL if available.</returns>
+    /// <param name="fileId">Unique identifier of the file entry.</param>
+    /// <returns>Upload response containing file status, progress, and metadata.</returns>
     [HttpGet("{fileId}")]
     [ProducesResponseType(typeof(UploadResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorApiResponse<object>), StatusCodes.Status400BadRequest)]
@@ -147,10 +151,17 @@ public class FileEntryController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Uploads an individual chunk for an existing file entry and updates upload progress.
+    /// </summary>
+    /// <param name="fileId">Unique identifier of the file entry.</param>
+    /// <param name="dto">Chunk details including index, hash, and file metadata.</param>
+    /// <returns>Upload response indicating the result of the chunk upload.</returns>
     [HttpPost("{fileId}/upload")]
     [ProducesResponseType(typeof(UploadResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> UploadFileEntry([FromRoute]string fileId, [FromForm] HandleFileUploadDto dto) {
+    public async Task<IActionResult> UploadFileEntry([FromRoute] string fileId, [FromForm] HandleFileUploadDto dto)
+    {
         if (!ModelState.IsValid)
             return BadRequest(new ErrorApiResponse<object>("Invalid Request"));
 
@@ -186,15 +197,17 @@ public class FileEntryController : ControllerBase
     }
 
     /// <summary>
-    /// Rounds off file upload for a particular file, marks it as complete and schedules a message to delete at a specified time
+    /// Finalizes the chunked upload for a file, commits the uploaded blocks, generates a secure download URL, and schedules automatic file deletion.
     /// </summary>
-    /// <param name="fileId"></param>
-    /// <returns></returns>
+    /// <param name="fileId">Unique identifier of the file entry.</param>
+    /// <returns>Upload result confirming successful finalization or indicating issues.</returns>
     [HttpPost("{fileId}/finalize")]
     [ProducesResponseType(typeof(UploadResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> FinalizeFileEntry([FromRoute] string fileId) {
-        if (string.IsNullOrWhiteSpace(fileId)) {
+    public async Task<IActionResult> FinalizeFileEntry([FromRoute] string fileId)
+    {
+        if (string.IsNullOrWhiteSpace(fileId))
+        {
             return BadRequest(new ErrorApiResponse<object>("File ID must be provided"));
         }
 

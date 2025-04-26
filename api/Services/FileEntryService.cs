@@ -317,7 +317,7 @@ public class FileEntryService : IFileEntryService
     {
         ValidationHelper.ValidateString(fileId, nameof(fileId));
 
-        var fileEntry = await _fileEntryRepository.FindFileEntryById(fileId)
+        var fileEntry = await _fileEntryRepository.FindFileEntryByIdWithChunks(fileId)
                           ?? throw new KeyNotFoundException("No file found with the provided ID.");
 
         var uploadedChunks = fileEntry.Chunks.Select(c => c.ChunkIndex).ToList();

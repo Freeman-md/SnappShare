@@ -22,7 +22,7 @@ public partial class FileEntryServiceTests
                                     .Build();
 
         _fileEntryRepository
-                    .Setup(repo => repo.FindFileEntryById(fileEntry.Id))
+                    .Setup(repo => repo.FindFileEntryByIdWithChunks(fileEntry.Id))
                     .ReturnsAsync(fileEntry);
 
 
@@ -37,7 +37,7 @@ public partial class FileEntryServiceTests
         Assert.NotNull(result.FileName);
         Assert.NotNull(result.FileSize);
         Assert.NotNull(result.FileUrl);
-        _fileEntryRepository.Verify(repo => repo.FindFileEntryById(fileEntry.Id), Times.Once);
+        _fileEntryRepository.Verify(repo => repo.FindFileEntryByIdWithChunks(fileEntry.Id), Times.Once);
     }
 
     [Fact]
@@ -52,7 +52,7 @@ public partial class FileEntryServiceTests
                                     .Build();
 
         _fileEntryRepository
-                    .Setup(repo => repo.FindFileEntryById(fileEntry.Id))
+                    .Setup(repo => repo.FindFileEntryByIdWithChunks(fileEntry.Id))
                     .ReturnsAsync(fileEntry);
 
 
@@ -67,7 +67,7 @@ public partial class FileEntryServiceTests
         Assert.NotNull(result.FileName);
         Assert.NotNull(result.FileSize);
         Assert.Null(result.FileUrl);
-        _fileEntryRepository.Verify(repo => repo.FindFileEntryById(fileEntry.Id), Times.Once);
+        _fileEntryRepository.Verify(repo => repo.FindFileEntryByIdWithChunks(fileEntry.Id), Times.Once);
     }
 
     [Theory]
@@ -82,7 +82,7 @@ public partial class FileEntryServiceTests
                                             .Build();
 
         _fileEntryRepository
-                    .Setup(repo => repo.FindFileEntryById(fileEntry.Id))
+                    .Setup(repo => repo.FindFileEntryByIdWithChunks(fileEntry.Id))
                     .ReturnsAsync(fileEntry);
 
 
@@ -94,7 +94,7 @@ public partial class FileEntryServiceTests
         Assert.Equal(totalChunks, result.TotalChunks);
         Assert.Equal(uploadedChunks, result.UploadedChunks!.Count);
         Assert.Null(result.FileUrl);
-        _fileEntryRepository.Verify(repo => repo.FindFileEntryById(fileEntry.Id), Times.Once);
+        _fileEntryRepository.Verify(repo => repo.FindFileEntryByIdWithChunks(fileEntry.Id), Times.Once);
     }
 
     [Fact]
@@ -102,7 +102,7 @@ public partial class FileEntryServiceTests
     {
         FileEntry fileEntry = new FileEntryBuilder().Build();
         _fileEntryRepository
-                    .Setup(repo => repo.FindFileEntryById(fileEntry.Id))
+                    .Setup(repo => repo.FindFileEntryByIdWithChunks(fileEntry.Id))
                     .ThrowsAsync(new KeyNotFoundException());
 
         await Assert.ThrowsAsync<KeyNotFoundException>(async () => await _fileEntryService.GetFileEntry(fileEntry.Id));
@@ -112,7 +112,7 @@ public partial class FileEntryServiceTests
     public async Task GetFileEntry_ThrowsArgumentException_WhenFileIdIsNullOrEmpty()
     {
         _fileEntryRepository
-                    .Setup(repo => repo.FindFileEntryById(null!));
+                    .Setup(repo => repo.FindFileEntryByIdWithChunks(null!));
 
         await Assert.ThrowsAsync<ArgumentException>(async () => await _fileEntryService.GetFileEntry(null!));
     }
@@ -121,7 +121,7 @@ public partial class FileEntryServiceTests
     public async Task GetFileEntry_ThrowsException_WhenRepositoryFails()
     {
         _fileEntryRepository
-                    .Setup(repo => repo.FindFileEntryById(It.IsAny<string>()))
+                    .Setup(repo => repo.FindFileEntryByIdWithChunks(It.IsAny<string>()))
                     .ThrowsAsync(new Exception());
 
         await Assert.ThrowsAnyAsync<Exception>(async () => await _fileEntryService.GetFileEntry(It.IsAny<string>()));
@@ -139,7 +139,7 @@ public partial class FileEntryServiceTests
                                     .Build();
 
         _fileEntryRepository
-                    .Setup(repo => repo.FindFileEntryById(fileEntry.Id))
+                    .Setup(repo => repo.FindFileEntryByIdWithChunks(fileEntry.Id))
                     .ReturnsAsync(fileEntry);
 
         UploadResponseDto result = await _fileEntryService.GetFileEntry(fileEntry.Id);
@@ -162,7 +162,7 @@ public partial class FileEntryServiceTests
                                     .Build();
 
         _fileEntryRepository
-                    .Setup(repo => repo.FindFileEntryById(fileEntry.Id))
+                    .Setup(repo => repo.FindFileEntryByIdWithChunks(fileEntry.Id))
                     .ReturnsAsync(fileEntry);
 
         UploadResponseDto result = await _fileEntryService.GetFileEntry(fileEntry.Id);
@@ -184,7 +184,7 @@ public partial class FileEntryServiceTests
                                     .Build();
 
         _fileEntryRepository
-                    .Setup(repo => repo.FindFileEntryById(fileEntry.Id))
+                    .Setup(repo => repo.FindFileEntryByIdWithChunks(fileEntry.Id))
                     .ReturnsAsync(fileEntry);
 
         UploadResponseDto result = await _fileEntryService.GetFileEntry(fileEntry.Id);
@@ -205,7 +205,7 @@ public partial class FileEntryServiceTests
                                     .Build();
 
         _fileEntryRepository
-                    .Setup(repo => repo.FindFileEntryById(fileEntry.Id))
+                    .Setup(repo => repo.FindFileEntryByIdWithChunks(fileEntry.Id))
                     .ReturnsAsync(fileEntry);
 
         UploadResponseDto result = await _fileEntryService.GetFileEntry(fileEntry.Id);
@@ -226,7 +226,7 @@ public partial class FileEntryServiceTests
                                     .Build();
 
         _fileEntryRepository
-                    .Setup(repo => repo.FindFileEntryById(fileEntry.Id))
+                    .Setup(repo => repo.FindFileEntryByIdWithChunks(fileEntry.Id))
                     .ReturnsAsync(fileEntry);
 
         UploadResponseDto result = await _fileEntryService.GetFileEntry(fileEntry.Id);

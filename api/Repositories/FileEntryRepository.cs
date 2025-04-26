@@ -39,6 +39,13 @@ public class FileEntryRepository : IFileEntryRepository
         return await _dbContext.FileEntries.FindAsync(fileId);
     }
 
+    public async Task<FileEntry?> FindFileEntryByIdWithChunks(string fileId)
+    {
+        return await _dbContext.FileEntries
+                .Include(f => f.Chunks)
+                .FirstOrDefaultAsync(f => f.Id == fileId);
+    }
+
     public async Task LockFile(string fileId)
     {
         FileEntry? fileEntry = await FindFileEntryById(fileId);
