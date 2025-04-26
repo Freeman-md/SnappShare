@@ -57,8 +57,6 @@ public partial class FileEntryServiceTests
         _fileEntryRepository.Verify(repo => repo.FindFileEntryById(It.IsAny<string>()), Times.Once);
         _chunkRepository.Verify(repo => repo.GetUploadedChunksByFileId(It.IsAny<string>()), Times.Once);
         _blobService.Verify(repo => repo.CommitBlockListAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IEnumerable<string>>()), Times.Once);
-        _fileEntryRepository.Verify(repo => repo.LockFile(It.IsAny<string>()), Times.Once);
-        _fileEntryRepository.Verify(repo => repo.UnlockFile(It.IsAny<string>()), Times.AtLeastOnce);
         _fileEntryRepository.Verify(repo => repo.MarkUploadComplete(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
 
@@ -83,8 +81,6 @@ public partial class FileEntryServiceTests
         _fileEntryRepository.Verify(repo => repo.FindFileEntryById(It.IsAny<string>()), Times.Once);
         _chunkRepository.Verify(repo => repo.GetUploadedChunksByFileId(It.IsAny<string>()), Times.Never);
         _blobService.Verify(repo => repo.CommitBlockListAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IEnumerable<string>>()), Times.Never);
-        _fileEntryRepository.Verify(repo => repo.LockFile(It.IsAny<string>()), Times.Never);
-        _fileEntryRepository.Verify(repo => repo.UnlockFile(It.IsAny<string>()), Times.AtLeastOnce);
         _fileEntryRepository.Verify(repo => repo.MarkUploadComplete(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
@@ -124,8 +120,6 @@ public partial class FileEntryServiceTests
         _fileEntryRepository.Verify(repo => repo.FindFileEntryById(It.IsAny<string>()), Times.Once);
         _chunkRepository.Verify(repo => repo.GetUploadedChunksByFileId(It.IsAny<string>()), Times.Once);
         _blobService.Verify(repo => repo.CommitBlockListAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IEnumerable<string>>()), Times.Never);
-        _fileEntryRepository.Verify(repo => repo.LockFile(It.IsAny<string>()), Times.Once);
-        _fileEntryRepository.Verify(repo => repo.UnlockFile(It.IsAny<string>()), Times.AtLeastOnce);
         _fileEntryRepository.Verify(repo => repo.MarkUploadComplete(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
@@ -146,8 +140,6 @@ public partial class FileEntryServiceTests
         _fileEntryRepository.Verify(repo => repo.FindFileEntryById(It.IsAny<string>()), Times.Once);
         _chunkRepository.Verify(repo => repo.GetUploadedChunksByFileId(It.IsAny<string>()), Times.Never);
         _blobService.Verify(repo => repo.CommitBlockListAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IEnumerable<string>>()), Times.Never);
-        _fileEntryRepository.Verify(repo => repo.LockFile(It.IsAny<string>()), Times.Never);
-        _fileEntryRepository.Verify(repo => repo.UnlockFile(It.IsAny<string>()), Times.Once);
         _fileEntryRepository.Verify(repo => repo.MarkUploadComplete(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
@@ -162,8 +154,6 @@ public partial class FileEntryServiceTests
         _fileEntryRepository.Verify(repo => repo.FindFileEntryById(It.IsAny<string>()), Times.Never);
         _chunkRepository.Verify(repo => repo.GetUploadedChunksByFileId(It.IsAny<string>()), Times.Never);
         _blobService.Verify(repo => repo.CommitBlockListAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IEnumerable<string>>()), Times.Never);
-        _fileEntryRepository.Verify(repo => repo.LockFile(It.IsAny<string>()), Times.Never);
-        _fileEntryRepository.Verify(repo => repo.UnlockFile(It.IsAny<string>()), Times.Once);
         _fileEntryRepository.Verify(repo => repo.MarkUploadComplete(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
@@ -192,8 +182,6 @@ public partial class FileEntryServiceTests
         _fileEntryRepository.Verify(repo => repo.FindFileEntryById(It.IsAny<string>()), Times.Once);
         _chunkRepository.Verify(repo => repo.GetUploadedChunksByFileId(It.IsAny<string>()), Times.Once);
         _blobService.Verify(repo => repo.CommitBlockListAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IEnumerable<string>>()), Times.Once);
-        _fileEntryRepository.Verify(repo => repo.LockFile(It.IsAny<string>()), Times.Once);
-        _fileEntryRepository.Verify(repo => repo.UnlockFile(It.IsAny<string>()), Times.Once);
         _fileEntryRepository.Verify(repo => repo.MarkUploadComplete(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 

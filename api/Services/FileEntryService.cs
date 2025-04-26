@@ -9,6 +9,7 @@ using api.Models.DTOs;
 using api.Tests.Interfaces.Services;
 using Helpers.ValidationHelper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.Options;
 
 namespace api.Services;
@@ -173,11 +174,12 @@ public class FileEntryService : IFileEntryService
                 return new UploadResponseDto
                 {
                     Status = UploadResponseDtoStatus.COMPLETE,
-                    FileUrl = fileEntry.FileUrl
+                    FileUrl = fileEntry.FileUrl,
+                    Message = "Upload finalized successfully. File is ready to access."
                 };
             }
 
-            await _fileEntryRepository.LockFile(fileId);
+            //TODO: File Locks should only be used to lock a file once upload has been finalized based on our current implementation of multiple endpoints - this prevents uploading chunks for complete file though upload chunk has a check. We could do either.
 
             List<Chunk> uploadedChunks = await _chunkRepository.GetUploadedChunksByFileId(fileId);
 
@@ -186,7 +188,8 @@ public class FileEntryService : IFileEntryService
                 return new UploadResponseDto
                 {
                     Status = UploadResponseDtoStatus.PARTIAL,
-                    FileUrl = fileEntry.FileUrl
+                    FileUrl = fileEntry.FileUrl,
+                    Message = "Upload incomplete. Some chunks are still missing."
                 };
             }
 
@@ -216,16 +219,13 @@ public class FileEntryService : IFileEntryService
             return new UploadResponseDto
             {
                 Status = UploadResponseDtoStatus.COMPLETE,
-                FileUrl = fileEntry.FileUrl
+                FileUrl = fileEntry.FileUrl,
+                Message = "Upload finalized successfully. File is ready to access."
             };
         }
         catch
         {
             throw;
-        }
-        finally
-        {
-            await _fileEntryRepository.UnlockFile(fileId);
         }
     }
 
@@ -294,6 +294,8 @@ public class FileEntryService : IFileEntryService
 
         // This validation is to ensure the right hashed file corresponds to the right file id in the database
         if (fileUploadResponse.FileId != fileId && fileUploadResponse.FileHash == fileHash) throw new ArgumentException("File hash and id do not correspond to existing values in database");
+
+        //TODO: Over here, we could check if file is locked - as the only case when a file is locked is that upload is complete.
 
         if (fileUploadResponse.Status == UploadResponseDtoStatus.COMPLETE) return fileUploadResponse;
 
