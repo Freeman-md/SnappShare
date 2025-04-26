@@ -64,6 +64,7 @@ public class FileEntryService : IFileEntryService
                 FileId = fileEntry.Id,
                 FileUrl = fileEntry.FileUrl,
                 FileSize = fileEntry.FileSize,
+                FileHash = fileEntry.FileHash,
                 Message = "File Uploaded Successfully"
             };
         }
@@ -73,6 +74,7 @@ public class FileEntryService : IFileEntryService
             Status = UploadResponseDtoStatus.PARTIAL,
             FileId = fileEntry.Id,
             FileSize = fileEntry.FileSize,
+            FileHash = fileEntry.FileHash,
             UploadedChunks = uploadedIndexes,
             TotalChunks = fileEntry.TotalChunks
         };
@@ -290,11 +292,12 @@ public class FileEntryService : IFileEntryService
 
         var fileUploadResponse = await CheckFileUploadStatus(fileHash);
 
+        // This validation is to ensure the right hashed file corresponds to the right file id in the database
+        if (fileUploadResponse.FileId != fileId && fileUploadResponse.FileHash == fileHash) throw new ArgumentException("File hash and id do not correspond to existing values in database");
+
         if (fileUploadResponse.Status == UploadResponseDtoStatus.COMPLETE) return fileUploadResponse;
 
         ValidateTotalChunks(fileUploadResponse, totalChunks);
-
-        fileId = fileUploadResponse.FileId!;
 
         var chunkUploadResponse = await UploadChunk(fileId, fileName, chunkIndex, chunkFile, chunkHash);
 
