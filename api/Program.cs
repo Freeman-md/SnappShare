@@ -38,11 +38,7 @@ builder.Services.AddCors(options =>
                             "http://localhost:3000", 
                             "http://localhost:8080", 
                             "https://snappshare.vercel.app", 
-                            "https://77e21a22-11e6-4ffc-8fd7-3066161c4a7c.lovableproject.com",
-                            "https://32b87998-ed2e-46ad-9f2a-4dfb5c5fea07.lovableproject.com",
-                            "https://id-preview--32b87998-ed2e-46ad-9f2a-4dfb5c5fea07.lovable.app",
-                            "https://preview--chunked-file-uploader.lovable.app",
-                            "https://chunked-file-uploader.vercel.app",
+                            "https://snappshare-web.vercel.app",
                             ])
                                 .AllowAnyMethod()  
                                 .AllowAnyHeader()  
