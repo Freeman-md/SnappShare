@@ -50,6 +50,10 @@ public class FileEntry {
 
     public DateTime CreatedAt { get; set; }  = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; }  = DateTime.UtcNow;
+
+    [NotMapped]
+    public DateTime ExpiresAt => UpdatedAt.AddMinutes((int)ExpiresIn);
+
     public DateTime? LockedAt { get; set; }
     
     [Required(ErrorMessage = "Please indicate when the file is due to expire")]

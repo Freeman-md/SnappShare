@@ -26,8 +26,7 @@ public class UploadResponseDto
 
     public string? FileUrl { get; set; }
 
-    public DateTime UpdatedAt { get; set; }  = DateTime.UtcNow;
-    public ExpiryDuration ExpiresIn { get; set; }  
+    public DateTime ExpiresAt { get; set; }
 
     public List<int>? UploadedChunks { get; set; }
 

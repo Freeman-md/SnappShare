@@ -14,6 +14,7 @@ using Microsoft.Extensions.Options;
 using api.Tests.Interfaces.Services;
 using System.Text.Json.Serialization;
 using api.Middlewares;
+using Microsoft.AspNetCore.Diagnostics;
 
 Env.Load();
 
@@ -49,6 +50,7 @@ builder.Services.AddCors(options =>
                       });
 });
 
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddSingleton<IBlobService, BlobService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IFileEntryService, FileEntryService>();
@@ -89,8 +91,6 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
-
-app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
 
 using (var scope = app.Services.CreateScope())

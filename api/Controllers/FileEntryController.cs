@@ -89,6 +89,7 @@ public class FileEntryController : ControllerBase
             return BadRequest(new ErrorApiResponse<object>("File ID must be provided."));
 
         var response = await _fileEntryService.GetFileEntry(fileId);
+
         return Ok(response);
     }
 

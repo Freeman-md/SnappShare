@@ -322,7 +322,8 @@ public class FileEntryService : IFileEntryService
             FileName = fileEntry.FileName,
             FileSize = fileEntry.FileSize,
             TotalChunks = fileEntry.TotalChunks,
-            UploadedChunks = uploadedChunks
+            UploadedChunks = uploadedChunks,
+            ExpiresAt = fileEntry.ExpiresAt
         };
 
         switch (fileEntry.Status)
