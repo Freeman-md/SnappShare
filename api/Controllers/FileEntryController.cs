@@ -160,7 +160,7 @@ public class FileEntryController : ControllerBase
     [HttpPost("{fileId}/upload")]
     [ProducesResponseType(typeof(UploadResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> UploadFileEntry([FromRoute] string fileId, [FromForm] HandleFileUploadDto dto)
+    public async Task<IActionResult> UploadFileEntryChunk([FromRoute] string fileId, [FromForm] ChunkDtoBase dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(new ErrorApiResponse<object>("Invalid Request"));

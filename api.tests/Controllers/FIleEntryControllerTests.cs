@@ -137,7 +137,7 @@ public class FileEntryControllerTests
     }
 
     [Fact]
-    public async Task UploadFileEntry_ShouldReturnOk_WhenUploadIsSuccessful()
+    public async Task UploadFileEntryChunk_ShouldReturnOk_WhenUploadIsSuccessful()
     {
         var dto = new HandleFileUploadDtoBuilder().Build();
         var expectedResponse = new UploadResponseDto { Status = UploadResponseDtoStatus.SUCCESS };
@@ -146,7 +146,7 @@ public class FileEntryControllerTests
             It.IsAny<string>(), dto.FileName, dto.FileHash, dto.ChunkIndex, dto.TotalChunks, dto.ChunkFile, dto.ChunkHash))
             .ReturnsAsync(expectedResponse);
 
-        var result = await _fileEntryController.UploadFileEntry("file123", dto);
+        var result = await _fileEntryController.UploadFileEntryChunk("file123", dto);
 
         var okResult = Assert.IsType<OkObjectResult>(result);
         var actualResponse = Assert.IsType<UploadResponseDto>(okResult.Value);
@@ -154,7 +154,7 @@ public class FileEntryControllerTests
     }
 
     [Fact]
-    public async Task UploadFileEntry_ShouldReturnSkippedStatus_WhenChunkAlreadyUploaded()
+    public async Task UploadFileEntryChunk_ShouldReturnSkippedStatus_WhenChunkAlreadyUploaded()
     {
         var dto = new HandleFileUploadDtoBuilder().Build();
         var expectedResponse = new UploadResponseDto { Status = UploadResponseDtoStatus.SKIPPED };
@@ -163,7 +163,7 @@ public class FileEntryControllerTests
             It.IsAny<string>(), dto.FileName, dto.FileHash, dto.ChunkIndex, dto.TotalChunks, dto.ChunkFile, dto.ChunkHash))
             .ReturnsAsync(expectedResponse);
 
-        var result = await _fileEntryController.UploadFileEntry("file123", dto);
+        var result = await _fileEntryController.UploadFileEntryChunk("file123", dto);
 
         var okResult = Assert.IsType<OkObjectResult>(result);
         var actualResponse = Assert.IsType<UploadResponseDto>(okResult.Value);
@@ -171,12 +171,12 @@ public class FileEntryControllerTests
     }
 
     [Fact]
-    public async Task UploadFileEntry_ShouldReturnBadRequest_WhenModelStateIsInvalid()
+    public async Task UploadFileEntryChunk_ShouldReturnBadRequest_WhenModelStateIsInvalid()
     {
         var dto = new HandleFileUploadDtoBuilder().Build();
         _fileEntryController.ModelState.AddModelError("FileHash", "Required");
 
-        var result = await _fileEntryController.UploadFileEntry("file123", dto);
+        var result = await _fileEntryController.UploadFileEntryChunk("file123", dto);
 
         var badRequest = Assert.IsType<BadRequestObjectResult>(result);
         var errorResponse = Assert.IsType<ErrorApiResponse<object>>(badRequest.Value);
@@ -194,7 +194,7 @@ public class FileEntryControllerTests
     }
 
     [Fact]
-    public async Task UploadFileEntry_ShouldReturnBadRequest_WhenUnexpectedExceptionOccurs()
+    public async Task UploadFileEntryChunk_ShouldReturnBadRequest_WhenUnexpectedExceptionOccurs()
     {
         var dto = new HandleFileUploadDtoBuilder().Build();
 
@@ -202,7 +202,7 @@ public class FileEntryControllerTests
             It.IsAny<string>(), dto.FileName, dto.FileHash, dto.ChunkIndex, dto.TotalChunks, dto.ChunkFile, dto.ChunkHash))
             .ThrowsAsync(new Exception("Unexpected Error"));
 
-        var result = await _fileEntryController.UploadFileEntry("file123", dto);
+        var result = await _fileEntryController.UploadFileEntryChunk("file123", dto);
 
         var badRequest = Assert.IsType<BadRequestObjectResult>(result);
         var error = Assert.IsType<ErrorApiResponse<object>>(badRequest.Value);

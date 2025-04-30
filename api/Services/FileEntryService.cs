@@ -113,8 +113,6 @@ public class FileEntryService : IFileEntryService
             ValidationHelper.ValidateNonNegativeNumber(chunkIndex, nameof(chunkIndex));
             ValidationHelper.ValidateChunkFile(chunkFile, nameof(chunkFile));
 
-            await _fileEntryRepository.LockFile(fileId);
-
             var existingChunk = await _chunkRepository.FindChunkByFileIdAndChunkIndex(fileId, chunkIndex);
             if (existingChunk != null)
             {
@@ -149,10 +147,6 @@ public class FileEntryService : IFileEntryService
         catch
         {
             throw;
-        }
-        finally
-        {
-            await _fileEntryRepository.UnlockFile(fileId);
         }
     }
 
