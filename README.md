@@ -1,86 +1,70 @@
-# SnappShare
+# SnappShare API
 
-SnappShare is a lightweight, secure file-sharing solution built with Azure and chunked, resumable uploads. It lets you upload large files from your phone or computer and generate a time-limited, secure link using Azure SAS tokens.
-
----
-
-## 🚀 Why SnappShare?
-
-One time, I needed to share a large file from my phone. I didn’t want to sign up for anything — just upload and send. But with network instability, every failed attempt meant starting over. That got me thinking:
-
-**What if you could upload big files safely — and not worry about network drops or data loss?**
-
-SnappShare solves that.
+SnappShare is a secure, scalable backend API built with **ASP.NET Core 8** that supports **chunked file uploads**, **resumable sessions**, **media streaming**, and **automated file expiration**. Designed for cloud-native environments, it integrates tightly with **Azure Blob Storage**, **Azure Service Bus**, and **Cosmos DB**.
 
 ---
 
-## ⚙ How It Works
+## ✨ Features
 
-1. 📤 **Chunk Uploads**: Files are uploaded in chunks (starting from 1MB, up to 5MB max per chunk). This means uploads resume from where they stopped — no restarts needed.
-2. 🔐 **Secure Access**: Files are served via a time-limited [SAS Token](https://learn.microsoft.com/en-us/azure/storage/common/storage-sas-overview) URL — only valid for the specified time.
-3. 🧹 **Scheduled Deletion**: Once an upload is complete, a deletion message is scheduled via Azure Service Bus. An Azure Function listens and deletes the file at the right time.
-
----
-
-## 🧱 Architecture (Refined MVP)
-
-### Frontend
-- Built with **React.js** (Vite + TypeScript + Tailwind + Shadcn/UI)
-
-### Backend
-- ASP.NET Core Web API (v8)
-- Chunked uploads handled via endpoints
-- Files stored in Azure Blob Storage
-- SQL Database stores file metadata
-
-### Identity & Access
-- 🔒 Secure Azure access using:
-  - **Service Principal** in local development
-  - **Managed Identity** in production (App Service)
-- Used for connecting to Blob Storage, SQL DB, and Service Bus
-
-### Cloud Services
-- **Azure Blob Storage** – file storage with lifecycle rules
-- **Azure SQL Database** – stores file and chunk metadata
-- **Azure Service Bus** – used internally for chunk coordination
-
-### Deployment
-- GitHub Actions CI/CD to **Azure App Service**
-- Live logs via Azure Log Stream (App Service > Logs > Stream)
+- 🔐 Secure file upload and session handling
+- 📦 Chunked uploads with resumable support
+- 🚀 Finalization and secure download via SAS token
+- 🧼 Automated file cleanup (via message queue)
+- 🧠 Built with separation of concerns (Service, Repository, Controller layers)
+- ☁️ Azure-first architecture (Blob Storage, Service Bus, Cosmos DB)
+- 🔧 Environment-based config for local or cloud setups
 
 ---
 
-## 📌 API Summary
+## 📐 Project Structure
 
-### `POST /file-entry/handle-upload`
-Handles chunk upload. Accepts:
-- `fileName`, `fileHash`, `chunkIndex`, `totalChunks`, `fileSize`, `chunkHash`, `expiresIn`, `chunkFile`
+```bash
+api/
+├── Controllers/           # API endpoints
+├── Services/              # Business logic
+├── Interfaces/            # Service and Repository contracts
+├── Repositories/          # Data access layers (EF Core)
+├── DTOs/                  # Data Transfer Objects
+├── Models/                # Domain models (FileEntry, Chunk, etc.)
+├── Enums/                 # Custom enums like UploadStatus, ExpiryDuration
+├── Configs/               # Bound options for Storage, ServiceBus
+├── Middlewares/          # Global exception handler
+├── Data/                 # EF DbContext setup
+├── Extensions/           # DI extension methods
+└── Program.cs            # Startup & configuration logic
+```
 
-Returns:
-- Upload status
-- Final secure file URL (when all chunks uploaded)
+---
+
+## 🌐 Endpoints
+
+All endpoints are prefixed with `/file-entry`:
+
+- `POST /create` – create a new file entry (metadata)
+- `POST /handle-upload` – handles incoming chunk + manages state
+- `POST /{fileId}/upload` – uploads a single chunk
+- `POST /{fileId}/finalize` – finalizes upload, returns download URL
+- `GET /{fileId}` – gets status of a file entry
 
 ---
 
 ## 🌐 Live App
-👉 [Check it out](https://snappshare.vercel.app)
+👉 [Check it out](https://snappshare-web.vercel.app)
 
 ---
 
-## 📸 Screenshots
+## ⚙️ Local Setup
 
-- ✅ Upload interface (React)
-- 🔒 SAS Token logic
-- 🌩️ Azure Storage Blob view
-- 🔄 Retry/resume logic for chunked files
+### Prerequisites
+- [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download)
+- [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
+- SQL Server (or use LocalDB)
+- `dotnet-ef` installed globally
+- Azure Storage Account, Service Bus, and optionally Cosmos DB
+- A valid Azure AD **Service Principal** for local authentication (used for Blob access)
 
----
+> ⚠️ You will need to create and configure various **Azure services** and a **Service Principal** to access them locally. When deployed to Azure, access is handled via **Managed Identity**.
 
-## 📂 Running Locally
-
-### Requirements
-- .NET 8
-- Azure Blob Storage + SQL + Service Principal credentials
 
 ### Setup
 1. Add your Azure values to `.env`:
@@ -112,12 +96,64 @@ dotnet run
 
 ---
 
+## ☁️ Azure Deployment
+
+This app is designed to be hosted on **Azure App Service** with the following services configured:
+
+- **Azure Blob Storage** – for file chunk storage
+- **Azure Service Bus** – for delayed deletion tasks
+- **Cosmos DB** – optional metadata persistence
+- **Managed Identity or Service Principal** – required for secure access to Azure services
+
+Make sure to:
+- Assign the right role to the App Service's managed identity (e.g., Storage Blob Data Contributor)
+- Upload your `publish profile` to GitHub Actions Secrets
+- Set required env variables in Azure App Service Configuration
+
+---
+
+## 🚀 GitHub Actions CI/CD
+
+A GitHub Actions workflow is configured to:
+
+1. Build & test the API
+2. Publish artifacts
+3. Deploy to Azure Web App
+
+You must:
+- Use `AZUREAPPSERVICE_PUBLISHPROFILE` as a GitHub secret
+- Keep within artifact storage quota limits to avoid deployment errors
+
+---
+
+## 🧪 Testing
+
+Tests live in `api.Tests` and cover service-level logic. More tests (controller & integration) will be added.
+
+Run tests:
+```bash
+dotnet test
+```
+
+---
+
+## ✅ Notes
+
+- File entries are cleaned up automatically based on expiry (1 min to 1 day).
+- Chunking and hash checks are built-in for upload reliability.
+- Uploads can resume from where they stopped.
+
+---
+
+## 🧠 Inspiration
+Built with real-world reliability and scalability in mind, optimized for developers needing resumable uploads on flaky connections.
+
+---
+
 ## 🧠 Future Plans
-- ⏫ Drag and drop multiple files
 - 📥 File download analytics
 - 🧾 Download receipts for time tracking
 - 🔑 Optional OTP/email-secured access
-
 ---
 
 ## 💬 Feedback?
