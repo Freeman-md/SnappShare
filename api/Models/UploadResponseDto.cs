@@ -1,3 +1,5 @@
+using api.Enums;
+
 namespace api.Models.DTOs;
 
 public enum UploadResponseDtoStatus
@@ -23,6 +25,9 @@ public class UploadResponseDto
     public long? FileSize { get; set; }
 
     public string? FileUrl { get; set; }
+
+    public DateTime UpdatedAt { get; set; }  = DateTime.UtcNow;
+    public ExpiryDuration ExpiresIn { get; set; }  
 
     public List<int>? UploadedChunks { get; set; }
 

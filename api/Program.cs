@@ -13,6 +13,7 @@ using api.Configs;
 using Microsoft.Extensions.Options;
 using api.Tests.Interfaces.Services;
 using System.Text.Json.Serialization;
+using api.Middlewares;
 
 Env.Load();
 
@@ -88,6 +89,9 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+
 
 using (var scope = app.Services.CreateScope())
 {

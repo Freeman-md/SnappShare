@@ -34,9 +34,7 @@ public class FileEntryController : ControllerBase
             return BadRequest(new ErrorApiResponse<object>("Invalid Request"));
         }
 
-        try
-        {
-            var result = await _fileEntryService.CreateFileEntry(
+        var result = await _fileEntryService.CreateFileEntry(
                 dto.FileName,
                 dto.FileHash,
                 dto.FileSize,
@@ -44,23 +42,7 @@ public class FileEntryController : ControllerBase
                 dto.ExpiresIn
             );
 
-            return Ok(result);
-        }
-        catch (ArgumentException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return BadRequest(new ErrorApiResponse<object>(ex.Message));
-        }
-        catch (Azure.RequestFailedException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return BadRequest(new ErrorApiResponse<object>(ExtractAzureErrorMessage(ex)));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, ex.Message);
-            return BadRequest(new ErrorApiResponse<object>(ex.Message));
-        }
+        return Ok(result);
     }
 
     /// <summary>
@@ -77,9 +59,7 @@ public class FileEntryController : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(new ErrorApiResponse<object>("Invalid Request"));
 
-        try
-        {
-            var result = await _fileEntryService.HandleFileUpload(
+        var result = await _fileEntryService.HandleFileUpload(
                                 dto.FileName,
                                 dto.FileHash,
                                 dto.FileSize,
@@ -90,23 +70,7 @@ public class FileEntryController : ControllerBase
                                 dto.ExpiresIn
                             );
 
-            return Ok(result);
-        }
-        catch (ArgumentException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return BadRequest(new ErrorApiResponse<object>(ex.Message));
-        }
-        catch (Azure.RequestFailedException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return BadRequest(new ErrorApiResponse<object>(ExtractAzureErrorMessage(ex)));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, ex.Message);
-            return BadRequest(new ErrorApiResponse<object>(ex.Message));
-        }
+        return Ok(result);
     }
 
     /// <summary>
@@ -124,31 +88,8 @@ public class FileEntryController : ControllerBase
         if (string.IsNullOrWhiteSpace(fileId))
             return BadRequest(new ErrorApiResponse<object>("File ID must be provided."));
 
-        try
-        {
-            var response = await _fileEntryService.GetFileEntry(fileId);
-            return Ok(response);
-        }
-        catch (ArgumentException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return BadRequest(new ErrorApiResponse<object>(ex.Message));
-        }
-        catch (KeyNotFoundException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return NotFound(new ErrorApiResponse<object>(ex.Message));
-        }
-        catch (Azure.RequestFailedException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return BadRequest(new ErrorApiResponse<object>(ExtractAzureErrorMessage(ex)));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, ex.Message);
-            return BadRequest(new ErrorApiResponse<object>(ex.Message));
-        }
+        var response = await _fileEntryService.GetFileEntry(fileId);
+        return Ok(response);
     }
 
     /// <summary>
@@ -165,9 +106,7 @@ public class FileEntryController : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(new ErrorApiResponse<object>("Invalid Request"));
 
-        try
-        {
-            var result = await _fileEntryService.UploadFileEntryChunk(
+        var result = await _fileEntryService.UploadFileEntryChunk(
                                 fileId,
                                 dto.FileName,
                                 dto.FileHash,
@@ -177,23 +116,7 @@ public class FileEntryController : ControllerBase
                                 dto.ChunkHash
                             );
 
-            return Ok(result);
-        }
-        catch (ArgumentException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return BadRequest(new ErrorApiResponse<object>(ex.Message));
-        }
-        catch (Azure.RequestFailedException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return BadRequest(new ErrorApiResponse<object>(ExtractAzureErrorMessage(ex)));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, ex.Message);
-            return BadRequest(new ErrorApiResponse<object>(ex.Message));
-        }
+        return Ok(result);
     }
 
     /// <summary>
@@ -211,44 +134,9 @@ public class FileEntryController : ControllerBase
             return BadRequest(new ErrorApiResponse<object>("File ID must be provided"));
         }
 
-        try
-        {
-            UploadResponseDto result = await _fileEntryService.FinalizeUpload(fileId);
+        UploadResponseDto result = await _fileEntryService.FinalizeUpload(fileId);
 
-            return Ok(result);
-        }
-        catch (ArgumentException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return BadRequest(new ErrorApiResponse<object>(ex.Message));
-        }
-        catch (KeyNotFoundException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return NotFound(new ErrorApiResponse<object>(ex.Message));
-        }
-        catch (Azure.RequestFailedException ex)
-        {
-            _logger.LogWarning(ex, ex.Message);
-            return BadRequest(new ErrorApiResponse<object>(ExtractAzureErrorMessage(ex)));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, ex.Message);
-            return BadRequest(new ErrorApiResponse<object>(ex.Message));
-        }
-    }
-
-
-    private string ExtractAzureErrorMessage(Azure.RequestFailedException ex)
-    {
-        return ex.ErrorCode switch
-        {
-            "BlobNotFound" => "The specified blob does not exist.",
-            "AuthorizationPermissionMismatch" => "You don't have permission to upload this file.",
-            "ContainerNotFound" => "The specified blob container does not exist.",
-            _ => "An unexpected Azure storage error occurred."
-        };
+        return Ok(result);
     }
 
 }
